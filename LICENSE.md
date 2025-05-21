@@ -9,7 +9,7 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
    - For non-commercial use (e.g., personal, academic, or educational purposes), no additional permission is required, provided the above conditions are met.
 
 2. **Commercial Use Notification**:
-   - For any commercial use, including but not limited to integration into commercial products, services, or systems, you must obtain prior written permission from Andrew Wade. To request permission, contact andrew@example.com with a detailed description of the intended commercial use, including the nature and scope of the project.
+   - For any commercial use, including but not limited to integration into commercial products, services, or systems, you must obtain prior written permission from Andrew Wade. To request permission, contact andrew@openturf.org with a detailed description of the intended commercial use, including the nature and scope of the project.
    - You must inform Andrew Wade of the specific purpose and context of the commercial use, and approval is subject to his discretion.
 
 3. **Restrictions**:
