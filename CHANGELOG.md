@@ -6,6 +6,22 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.4.1] – 2025-05-26
+
+### Added
+- Enhanced `/v1/info` endpoint with comprehensive API information
+  * System version and status details
+  * Detailed feature documentation
+  * Weather integration capabilities
+  * Risk assessment descriptions
+  * Real-time operational status
+
+### Changed
+- Updated main router configuration to include info endpoints
+- Improved API documentation with proper GitHub repository links
+
+---
+
 ## [0.4.0] – 2025-05-25
 
 ### Added
