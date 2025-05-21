@@ -105,7 +105,7 @@ RunwayGuard uses a sophisticated algorithm to calculate a Runway Risk Index (RRI
 
 ### Example Outputs
 
-![Example Output 1 -- DFW](./docs/example/kdfw.png)
+![Example Output 1 -- DFW](./docs/example/kdfw.md)
 
 ## 🔬 Technical Details
 
