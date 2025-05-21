@@ -103,6 +103,10 @@ RunwayGuard uses a sophisticated algorithm to calculate a Runway Risk Index (RRI
 - Operational risk monitoring
 - Historical trend analysis
 
+### Example Outputs
+
+![Example Output 1 -- DFW](./docs/example/kdfw.png)
+
 ## 🔬 Technical Details
 
 RunwayGuard employs several sophisticated algorithms and real-time data processing techniques:

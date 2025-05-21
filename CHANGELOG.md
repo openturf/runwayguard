@@ -6,6 +6,16 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.4.2] – 2025-05-26
+
+### Added
+- Example outputs section in README.md
+  * Added visual example output for KDFW
+  * Enhanced documentation with real-world use case
+  * Improved user understanding with visual aids
+
+---
+
 ## [0.4.1] – 2025-05-26
 
 ### Added

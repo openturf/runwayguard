@@ -1,0 +1,1170 @@
+{
+    "icao": "KDFW",
+    "airport_info": {
+      "elevation": 185,
+      "mag_dec": "04E",
+      "runways": [
+        {
+          "id": "13L/31R",
+          "heading": 135
+        },
+        {
+          "id": "13R/31L",
+          "heading": 139
+        },
+        {
+          "id": "17C/35C",
+          "heading": 180
+        },
+        {
+          "id": "17L/35R",
+          "heading": 180
+        },
+        {
+          "id": "17R/35L",
+          "heading": 180
+        },
+        {
+          "id": "18L/36R",
+          "heading": 180
+        },
+        {
+          "id": "18R/36L",
+          "heading": 180
+        }
+      ]
+    },
+    "metar": {
+      "obs_time": "210253Z",
+      "wind_dir": 350,
+      "wind_speed": 4,
+      "wind_gust": 0,
+      "altim_in_hg": 29.92,
+      "temp_c": 23,
+      "ceiling": null,
+      "cloud_layers": [
+        {
+          "type": "FEW",
+          "height": 25000
+        }
+      ],
+      "visibility": 10,
+      "weather": [],
+      "lightning": null,
+      "raw": "KDFW 210253Z 35004KT 10SM FEW250 23/10 A2992 RMK AO2 SLP124 T02330100 53021",
+      "debug": null
+    },
+    "taf": {
+      "raw": [
+        {
+          "tafId": 21472811,
+          "icaoId": "KDFW",
+          "dbPopTime": "2025-05-21 02:49:36",
+          "bulletinTime": "2025-05-21 02:49:00",
+          "issueTime": "2025-05-21 02:49:00",
+          "validTimeFrom": 1747796400,
+          "validTimeTo": 1747893600,
+          "rawTAF": "KDFW 210249Z 2103/2206 35009KT P6SM SKC FM210500 18003KT P6SM FEW250 FM211600 17013KT P6SM SCT250",
+          "mostRecent": 1,
+          "remarks": "AMD",
+          "lat": 32.8974,
+          "lon": -97.0219,
+          "elev": 168,
+          "prior": 0,
+          "name": "Dallas-Ft Worth Intl, TX, US",
+          "fcsts": [
+            {
+              "timeGroup": 0,
+              "timeFrom": 1747796400,
+              "timeTo": 1747803600,
+              "timeBec": null,
+              "fcstChange": null,
+              "probability": null,
+              "wdir": 350,
+              "wspd": 9,
+              "wgst": null,
+              "wshearHgt": null,
+              "wshearDir": null,
+              "wshearSpd": null,
+              "visib": "6+",
+              "altim": null,
+              "vertVis": null,
+              "wxString": null,
+              "notDecoded": null,
+              "clouds": [
+                {
+                  "cover": "SKC",
+                  "base": null,
+                  "type": null
+                }
+              ],
+              "icgTurb": [],
+              "temp": []
+            },
+            {
+              "timeGroup": 1,
+              "timeFrom": 1747803600,
+              "timeTo": 1747843200,
+              "timeBec": null,
+              "fcstChange": "FM",
+              "probability": null,
+              "wdir": 180,
+              "wspd": 3,
+              "wgst": null,
+              "wshearHgt": null,
+              "wshearDir": null,
+              "wshearSpd": null,
+              "visib": "6+",
+              "altim": null,
+              "vertVis": null,
+              "wxString": null,
+              "notDecoded": null,
+              "clouds": [
+                {
+                  "cover": "FEW",
+                  "base": 25000,
+                  "type": null
+                }
+              ],
+              "icgTurb": [],
+              "temp": []
+            },
+            {
+              "timeGroup": 2,
+              "timeFrom": 1747843200,
+              "timeTo": 1747893600,
+              "timeBec": null,
+              "fcstChange": "FM",
+              "probability": null,
+              "wdir": 170,
+              "wspd": 13,
+              "wgst": null,
+              "wshearHgt": null,
+              "wshearDir": null,
+              "wshearSpd": null,
+              "visib": "6+",
+              "altim": null,
+              "vertVis": null,
+              "wxString": null,
+              "notDecoded": null,
+              "clouds": [
+                {
+                  "cover": "SCT",
+                  "base": 25000,
+                  "type": null
+                }
+              ],
+              "icgTurb": [],
+              "temp": []
+            }
+          ]
+        }
+      ],
+      "start_time": null,
+      "end_time": null,
+      "debug": "Text TAF fallback"
+    },
+    "stationinfo": {
+      "latitude": 32.8974,
+      "longitude": -97.0219,
+      "elevation": 168
+    },
+    "notams": {
+      "closed_runways": []
+    },
+    "gairmet": [],
+    "sigmet": [],
+    "isigmet": [],
+    "pirep": [],
+    "cwa": [],
+    "windtemp": {
+      "isecs": 1747785600,
+      "date": "20250521_00",
+      "fcst": "06",
+      "vsecs": 1747807200,
+      "vdate": "20250521_06",
+      "level": 30,
+      "sites": [
+        {
+          "id": "BHM",
+          "lat": 33.6,
+          "lon": -86.7,
+          "dir": 250,
+          "spd": 30
+        },
+        {
+          "id": "HSV",
+          "lat": 34.7,
+          "lon": -86.8,
+          "dir": 270,
+          "spd": 33
+        },
+        {
+          "id": "MGM",
+          "lat": 32.3,
+          "lon": -86.9,
+          "dir": 250,
+          "spd": 29
+        },
+        {
+          "id": "MOB",
+          "lat": 30.7,
+          "lon": -88.2,
+          "dir": 240,
+          "spd": 18
+        },
+        {
+          "id": "FSM",
+          "lat": 35.3,
+          "lon": -94.4,
+          "dir": 280,
+          "spd": 13
+        },
+        {
+          "id": "LIT",
+          "lat": 34.7,
+          "lon": -92.2,
+          "dir": 330,
+          "spd": 29
+        },
+        {
+          "id": "LCH",
+          "lat": 30.1,
+          "lon": -93.2,
+          "dir": 290,
+          "spd": 9
+        },
+        {
+          "id": "MSY",
+          "lat": 30,
+          "lon": -90.2,
+          "dir": 240,
+          "spd": 14
+        },
+        {
+          "id": "SHV",
+          "lat": 32.4,
+          "lon": -93.8,
+          "dir": 350,
+          "spd": 22
+        },
+        {
+          "id": "JAN",
+          "lat": 32.3,
+          "lon": -90.1,
+          "dir": 300,
+          "spd": 21
+        },
+        {
+          "id": "GAG",
+          "lat": 36.3,
+          "lon": -99.8,
+          "dir": 0,
+          "spd": 0
+        },
+        {
+          "id": "OKC",
+          "lat": 35.4,
+          "lon": -97.6,
+          "dir": 250,
+          "spd": 8
+        },
+        {
+          "id": "TUL",
+          "lat": 36.2,
+          "lon": -95.9,
+          "dir": 990,
+          "spd": 0
+        },
+        {
+          "id": "BNA",
+          "lat": 36.1,
+          "lon": -86.7,
+          "dir": 270,
+          "spd": 31
+        },
+        {
+          "id": "MEM",
+          "lat": 35,
+          "lon": -90,
+          "dir": 320,
+          "spd": 31
+        },
+        {
+          "id": "TRI",
+          "lat": 36.4,
+          "lon": -82.4,
+          "dir": 0,
+          "spd": 0
+        },
+        {
+          "id": "TYS",
+          "lat": 35.8,
+          "lon": -84,
+          "dir": 250,
+          "spd": 16
+        },
+        {
+          "id": "ABI",
+          "lat": 32.4,
+          "lon": -99.7,
+          "dir": 0,
+          "spd": 0
+        },
+        {
+          "id": "AMA",
+          "lat": 35.2,
+          "lon": -101.7,
+          "dir": 0,
+          "spd": 0
+        },
+        {
+          "id": "BRO",
+          "lat": 25.9,
+          "lon": -97.4,
+          "dir": 130,
+          "spd": 8
+        },
+        {
+          "id": "CLL",
+          "lat": 30.6,
+          "lon": -96.4,
+          "dir": 30,
+          "spd": 12
+        },
+        {
+          "id": "CRP",
+          "lat": 27.8,
+          "lon": -97.5,
+          "dir": 90,
+          "spd": 16
+        },
+        {
+          "id": "DAL",
+          "lat": 32.8,
+          "lon": -96.8,
+          "dir": 990,
+          "spd": 0
+        },
+        {
+          "id": "DRT",
+          "lat": 29.4,
+          "lon": -100.9,
+          "dir": 140,
+          "spd": 13
+        },
+        {
+          "id": "ELP",
+          "lat": 31.8,
+          "lon": -106.4,
+          "dir": 0,
+          "spd": 0
+        },
+        {
+          "id": "HOU",
+          "lat": 29.6,
+          "lon": -95.3,
+          "dir": 990,
+          "spd": 0
+        },
+        {
+          "id": "INK",
+          "lat": 31.8,
+          "lon": -103.2,
+          "dir": 0,
+          "spd": 0
+        },
+        {
+          "id": "LBB",
+          "lat": 33.7,
+          "lon": -101.8,
+          "dir": 0,
+          "spd": 0
+        },
+        {
+          "id": "LRD",
+          "lat": 27.5,
+          "lon": -99.5,
+          "dir": 100,
+          "spd": 12
+        },
+        {
+          "id": "MRF",
+          "lat": 30.4,
+          "lon": -104,
+          "dir": 0,
+          "spd": 0
+        },
+        {
+          "id": "PSX",
+          "lat": 28.7,
+          "lon": -96.3,
+          "dir": 80,
+          "spd": 6
+        },
+        {
+          "id": "SAT",
+          "lat": 29.5,
+          "lon": -98.5,
+          "dir": 100,
+          "spd": 13
+        },
+        {
+          "id": "SPS",
+          "lat": 34,
+          "lon": -98.5,
+          "dir": 200,
+          "spd": 15
+        },
+        {
+          "id": "T01",
+          "lat": 28.5,
+          "lon": -93.5,
+          "dir": 220,
+          "spd": 8
+        },
+        {
+          "id": "T06",
+          "lat": 28.5,
+          "lon": -91,
+          "dir": 220,
+          "spd": 5
+        },
+        {
+          "id": "T07",
+          "lat": 28.5,
+          "lon": -88,
+          "dir": 220,
+          "spd": 10
+        },
+        {
+          "id": "4J3",
+          "lat": 28.5,
+          "lon": -85,
+          "dir": 240,
+          "spd": 8
+        },
+        {
+          "id": "H51",
+          "lat": 26.5,
+          "lon": -95,
+          "dir": 140,
+          "spd": 6
+        },
+        {
+          "id": "H52",
+          "lat": 26,
+          "lon": -89.5,
+          "dir": 140,
+          "spd": 13
+        },
+        {
+          "id": "H61",
+          "lat": 26.5,
+          "lon": -84,
+          "dir": 200,
+          "spd": 5
+        },
+        {
+          "id": "ADK",
+          "lat": 51.9,
+          "lon": -176.6,
+          "dir": 350,
+          "spd": 12
+        },
+        {
+          "id": "ADQ",
+          "lat": 57.7,
+          "lon": -152.5,
+          "dir": 200,
+          "spd": 13
+        },
+        {
+          "id": "AKN",
+          "lat": 58.7,
+          "lon": -156.6,
+          "dir": 160,
+          "spd": 25
+        },
+        {
+          "id": "ANC",
+          "lat": 61.2,
+          "lon": -150,
+          "dir": 150,
+          "spd": 14
+        },
+        {
+          "id": "ANN",
+          "lat": 55,
+          "lon": -131.6,
+          "dir": 320,
+          "spd": 9
+        },
+        {
+          "id": "BET",
+          "lat": 60.8,
+          "lon": -161.8,
+          "dir": 90,
+          "spd": 11
+        },
+        {
+          "id": "BRW",
+          "lat": 71.3,
+          "lon": -156.8,
+          "dir": 60,
+          "spd": 11
+        },
+        {
+          "id": "BTI",
+          "lat": 70.1,
+          "lon": -143.6,
+          "dir": 990,
+          "spd": 0
+        },
+        {
+          "id": "BTT",
+          "lat": 66.9,
+          "lon": -151.5,
+          "dir": 90,
+          "spd": 9
+        },
+        {
+          "id": "CDB",
+          "lat": 55.2,
+          "lon": -162.7,
+          "dir": 200,
+          "spd": 28
+        },
+        {
+          "id": "CZF",
+          "lat": 61.8,
+          "lon": -166,
+          "dir": 50,
+          "spd": 18
+        },
+        {
+          "id": "EHM",
+          "lat": 58.6,
+          "lon": -162.1,
+          "dir": 100,
+          "spd": 27
+        },
+        {
+          "id": "FAI",
+          "lat": 64.8,
+          "lon": -147.8,
+          "dir": 120,
+          "spd": 9
+        },
+        {
+          "id": "FYU",
+          "lat": 66.6,
+          "lon": -145.2,
+          "dir": 90,
+          "spd": 5
+        },
+        {
+          "id": "GAL",
+          "lat": 64.7,
+          "lon": -156.9,
+          "dir": 40,
+          "spd": 9
+        },
+        {
+          "id": "GKN",
+          "lat": 62.2,
+          "lon": -145.5,
+          "dir": 170,
+          "spd": 22
+        },
+        {
+          "id": "HOM",
+          "lat": 59.6,
+          "lon": -151.5,
+          "dir": 150,
+          "spd": 19
+        },
+        {
+          "id": "JNU",
+          "lat": 58.4,
+          "lon": -134.6,
+          "dir": 250,
+          "spd": 5
+        },
+        {
+          "id": "LUR",
+          "lat": 68.9,
+          "lon": -166.1,
+          "dir": 60,
+          "spd": 25
+        },
+        {
+          "id": "MCG",
+          "lat": 62.9,
+          "lon": -155.6,
+          "dir": 990,
+          "spd": 0
+        },
+        {
+          "id": "MDO",
+          "lat": 59.4,
+          "lon": -146.3,
+          "dir": 140,
+          "spd": 15
+        },
+        {
+          "id": "OME",
+          "lat": 64.5,
+          "lon": -165.4,
+          "dir": 40,
+          "spd": 10
+        },
+        {
+          "id": "ORT",
+          "lat": 63,
+          "lon": -141.9,
+          "dir": 0,
+          "spd": 0
+        },
+        {
+          "id": "OTZ",
+          "lat": 66.9,
+          "lon": -162.6,
+          "dir": 70,
+          "spd": 9
+        },
+        {
+          "id": "SNP",
+          "lat": 57.2,
+          "lon": -170.2,
+          "dir": 20,
+          "spd": 27
+        },
+        {
+          "id": "TKA",
+          "lat": 62.3,
+          "lon": -150.1,
+          "dir": 180,
+          "spd": 18
+        },
+        {
+          "id": "UNK",
+          "lat": 63.9,
+          "lon": -160.8,
+          "dir": 60,
+          "spd": 10
+        },
+        {
+          "id": "YAK",
+          "lat": 59.5,
+          "lon": -139.7,
+          "dir": 990,
+          "spd": 0
+        },
+        {
+          "id": "IKO",
+          "lat": 52.9,
+          "lon": -168.8,
+          "dir": 340,
+          "spd": 33
+        },
+        {
+          "id": "AFM",
+          "lat": 67.1,
+          "lon": -157.9,
+          "dir": 90,
+          "spd": 6
+        },
+        {
+          "id": "5AB",
+          "lat": 52.4,
+          "lon": 176,
+          "dir": 190,
+          "spd": 9
+        },
+        {
+          "id": "5AC",
+          "lat": 52,
+          "lon": -135,
+          "dir": 290,
+          "spd": 10
+        },
+        {
+          "id": "5AD",
+          "lat": 54,
+          "lon": -145,
+          "dir": 240,
+          "spd": 15
+        },
+        {
+          "id": "5AE",
+          "lat": 55,
+          "lon": -155,
+          "dir": 200,
+          "spd": 31
+        },
+        {
+          "id": "5AF",
+          "lat": 56,
+          "lon": -137,
+          "dir": 270,
+          "spd": 10
+        },
+        {
+          "id": "5AG",
+          "lat": 58,
+          "lon": -142,
+          "dir": 200,
+          "spd": 9
+        },
+        {
+          "id": "LIH",
+          "lat": 22,
+          "lon": -159.3,
+          "dir": 70,
+          "spd": 19
+        },
+        {
+          "id": "HNL",
+          "lat": 21.3,
+          "lon": -157.9,
+          "dir": 80,
+          "spd": 27
+        },
+        {
+          "id": "LNY",
+          "lat": 20.8,
+          "lon": -156.9,
+          "dir": 90,
+          "spd": 18
+        },
+        {
+          "id": "OGG",
+          "lat": 20.9,
+          "lon": -156.4,
+          "dir": 100,
+          "spd": 22
+        },
+        {
+          "id": "KOA",
+          "lat": 19.7,
+          "lon": -156,
+          "dir": 990,
+          "spd": 0
+        },
+        {
+          "id": "ITO",
+          "lat": 19.7,
+          "lon": -155,
+          "dir": 120,
+          "spd": 10
+        }
+      ],
+      "AK included": true,
+      "HI included": true,
+      "PAC included": false
+    },
+    "areafcst": {
+      "raw": "\n000\nFAAK48 PAWU 202025\nFA8H  \nANCH FA 202015\nAK SRN HLF EXCP SE AK...\n.\nAIRMETS VALID UNTIL 210415\nCB IMPLY POSSIBLE SEV OR GREATER TURB SEV ICE LLWS AND IFR CONDS.\nNON MSL HEIGHTS NOTED BY AGL OR CIG.\n.\nSYNOPSIS VALID UNTIL 211400\nWK RIDGE WILL BUILD OVER THE N PAC/ERN \nGULF DURG FCST PD. OTRW A 992MB LOW \nPRES SYS W/ ASSCO OCFRNT FRNT NEAR \nPADU WILL MOV E TO NEAR PACD BY 08Z. \n.\nCOOK INLET AND SUSITNA VLY AB...VALID UNTIL 210800\n...CLOUDS/WX...\n***AIRMET MT OBSC***MTS OCNL OBSC BY CLDS/PCPN. NC...\nPAEN N FEW020 SCT035 BKN060 TOP 160 W/ INCRG LYRS FM W. OCNL BKN035 -SHRA.\nELSW FEW035 BKN060 TOP 100. ISOL BKN035 -SHRA.\nCONDS SPRDG TO ALL SXNS BY END OF PD.\nBETWEEN PAAQ-PANC SFC WND SE G20KT.\nALG TURNAGAIN ARM SFC WND E-SE 15G30KT.\nOTLK VALID 210800-211400...VFR. S PAHO VFR DTRT MVFR RA BR.\nPASSES...LAKE CLARK...MERRILL...VFR OCNL SHRA.\nRAINY...WINDY...VFR OCNL SHRA.\nPORTAGE...MVFR CIG OCNL SHRA.\n...TURB...\n***AIRMET TURB***AFT 23Z OCNL MOD TURB FL300-FL400. NC...\nAFT 23Z SE LK CLARK PASS-PAAQ LN ISOL MOD TURB BLW 060.\n...ICE AND FZLVL...\nTIL 02Z NW PATO ISOL MOD ICEIC 030-100. FZLVL 040.\n.\nCOPPER RIVER BASIN AC...VALID UNTIL 210800\n...CLOUDS/WX...\n***AIRMET MT OBSC***MTS OCNL OBSC BY CLDS/ISOL PCPN. IMPR...\nE PAGK SCT035 BKN050 TOP FL180. OCNL BKN035.\nELSW FEW025 SCT040 SCT080 W/ INCRG CI FM W. \nOCNL BKN040. ISOL -SHRA.\nN PAZK-PAMX LN ISOL BKN040TCU TOP FL180 -SHRA.\nOTLK VALID 210800-211400...VFR ISOL SHRA.\nPASS...TAHNETA...VFR ISOL SHRA.\n...TURB...\nNIL SIG. EXC VCY TCU.\n...ICE AND FZLVL...\nNIL SIG. EXC VCY TCU. FZLVL 050.\n.\nCNTRL GLF CST AD...VALID UNTIL 210800\n...CLOUDS/WX...\n***AIRMET MT OBSC***MTS OCNL OBSC IN CLDS/ISOL PCPN. NC...\nPAWR-PAMD LN E SCT020 BKN040 TOP 120 W/ INCRG CI FM W. \nOCNL BKN020 ISOL -SHRA. CONDS SPRDG TO ALL SXNS AFT 03Z.\nELSW/OTRW SCT035 BKN060 TOP 120. OCNL BKN035 ISOL -SHRA\nOTLK VALID 210800-211400...MVFR SHRA BECMG RA BR.\n...TURB...\n***AIRMET TURB***AFT 23Z SW PAWD OCNL MOD TURB FL300-FL400. NC...\nAFT 23Z NW PAWD-PAVD LN ISOL MOD TURB BLW 060.\n...ICE AND FZLVL...\nNIL SIG. FZLVL 035.\n.\nKODIAK IS AE...VALID UNTIL 210800\n...CLOUDS/WX...\n***AIRMET MT OBSC***W PADQ MTS OCNL OBSC BY CLDS/PCPN. SPRDG E. DTRT...\nPAKH W FEW007 BKN020 OVC050 TOP FL300.\nOCNL BKN020 VIS 3-5SM -RA BR. ISOL BKN007.\nCONDS SPRDG TO ALL SXNS AFT 03Z.\nELSW/OTRW FEW050 SCT100 W/ INCRG LYRS TO FL300.\nS PADQ-PAJC LN SFC WND S 20G30KT.\nOTLK VALID 210800-211400...MVFR RA BR DTRT IFR RA BR.\n...TURB...\n***AIRMET LLWS***AFT 03Z AREAS OF LLWS. INTSF...\n***AIRMET TURB***TIL 02Z PAKH NE OCNL MOD TURB FL300-FL400. WKN...\nAFT 05Z W AUGUSTINE-CHIRIKOF IS LN OCNL MOD TURB BLW 040.\nAFT 23Z SW AUGUSTINE-PADQ LN ISOL MOD TURB BLW 040.\n...ICE AND FZLVL...\nAFT 23Z PADQ SW ISOL MOD ICEIC 070-160. FZLVL 030.\n.\nTS MAY 2025 AAWU=\n"
+    },
+    "fcstdisc": {
+      "raw": "No AFD available from the past six hours"
+    },
+    "mis": {
+      "raw": []
+    },
+    "runway_briefs": [
+      {
+        "runway": "13L/31R",
+        "heading": 135,
+        "headwind_kt": 3,
+        "crosswind_kt": 2,
+        "gust_headwind_kt": 0,
+        "gust_crosswind_kt": 0,
+        "tailwind": true,
+        "gust_tailwind": false,
+        "density_altitude_ft": 1189,
+        "runway_risk_contributors": {
+          "tailwind": {
+            "score": 18,
+            "value": 3,
+            "unit": "kt"
+          },
+          "crosswind": {
+            "score": 4,
+            "value": 2,
+            "unit": "kt"
+          },
+          "density_altitude_diff": {
+            "score": 15.06,
+            "value": 1004,
+            "unit": "ft"
+          },
+          "time_of_day": {
+            "score": 20,
+            "value": "NIGHT",
+            "unit": "condition"
+          }
+        },
+        "runway_risk_index": 57,
+        "risk_category": "HIGH",
+        "status": "CAUTION",
+        "rri_p05": 49,
+        "rri_p95": 71,
+        "weather": [],
+        "ceiling": null,
+        "visibility": 10,
+        "warnings": [
+          "Night operations"
+        ],
+        "time_factors": {
+          "time_risk_points": 20,
+          "time_period": "NIGHT",
+          "risk_reasons": [
+            "Night operations"
+          ],
+          "sun_position": {
+            "zenith": 114.39820583674181,
+            "azimuth": 137.8281553595866
+          }
+        },
+        "plain_summary": "Exercise caution when landing or taking off from Runway 13L/31R at KDFW due to the high risk indicated by the Runway Risk Index, despite favorable weather conditions and minimal wind"
+      },
+      {
+        "runway": "13R/31L",
+        "heading": 139,
+        "headwind_kt": 3,
+        "crosswind_kt": 2,
+        "gust_headwind_kt": 0,
+        "gust_crosswind_kt": 0,
+        "tailwind": true,
+        "gust_tailwind": false,
+        "density_altitude_ft": 1189,
+        "runway_risk_contributors": {
+          "tailwind": {
+            "score": 18,
+            "value": 3,
+            "unit": "kt"
+          },
+          "crosswind": {
+            "score": 4,
+            "value": 2,
+            "unit": "kt"
+          },
+          "density_altitude_diff": {
+            "score": 15.06,
+            "value": 1004,
+            "unit": "ft"
+          },
+          "time_of_day": {
+            "score": 20,
+            "value": "NIGHT",
+            "unit": "condition"
+          }
+        },
+        "runway_risk_index": 57,
+        "risk_category": "HIGH",
+        "status": "CAUTION",
+        "rri_p05": 49,
+        "rri_p95": 71,
+        "weather": [],
+        "ceiling": null,
+        "visibility": 10,
+        "warnings": [
+          "Night operations"
+        ],
+        "time_factors": {
+          "time_risk_points": 20,
+          "time_period": "NIGHT",
+          "risk_reasons": [
+            "Night operations"
+          ],
+          "sun_position": {
+            "zenith": 114.40055451216753,
+            "azimuth": 137.83159460535714
+          }
+        },
+        "plain_summary": "Exercise caution when landing or taking off from Runway 13R/31L at KDFW due to the high risk indicated by the Runway Risk Index, despite favorable weather conditions and minimal wind"
+      },
+      {
+        "runway": "17C/35C",
+        "heading": 180,
+        "headwind_kt": 4,
+        "crosswind_kt": 1,
+        "gust_headwind_kt": 0,
+        "gust_crosswind_kt": 0,
+        "tailwind": true,
+        "gust_tailwind": false,
+        "density_altitude_ft": 1189,
+        "runway_risk_contributors": {
+          "tailwind": {
+            "score": 24,
+            "value": 4,
+            "unit": "kt"
+          },
+          "crosswind": {
+            "score": 2,
+            "value": 1,
+            "unit": "kt"
+          },
+          "density_altitude_diff": {
+            "score": 15.06,
+            "value": 1004,
+            "unit": "ft"
+          },
+          "time_of_day": {
+            "score": 20,
+            "value": "NIGHT",
+            "unit": "condition"
+          }
+        },
+        "runway_risk_index": 61,
+        "risk_category": "HIGH",
+        "status": "CAUTION",
+        "rri_p05": 47,
+        "rri_p95": 67,
+        "weather": [],
+        "ceiling": null,
+        "visibility": 10,
+        "warnings": [
+          "Night operations"
+        ],
+        "time_factors": {
+          "time_risk_points": 20,
+          "time_period": "NIGHT",
+          "risk_reasons": [
+            "Night operations"
+          ],
+          "sun_position": {
+            "zenith": 114.40290303194023,
+            "azimuth": 137.83503404324344
+          }
+        },
+        "plain_summary": "Exercise caution when landing or taking off on Runway 17C/35C at KDFW due to high risk factors including a slight crosswind and high density altitude."
+      },
+      {
+        "runway": "17L/35R",
+        "heading": 180,
+        "headwind_kt": 4,
+        "crosswind_kt": 1,
+        "gust_headwind_kt": 0,
+        "gust_crosswind_kt": 0,
+        "tailwind": true,
+        "gust_tailwind": false,
+        "density_altitude_ft": 1189,
+        "runway_risk_contributors": {
+          "tailwind": {
+            "score": 24,
+            "value": 4,
+            "unit": "kt"
+          },
+          "crosswind": {
+            "score": 2,
+            "value": 1,
+            "unit": "kt"
+          },
+          "density_altitude_diff": {
+            "score": 15.06,
+            "value": 1004,
+            "unit": "ft"
+          },
+          "time_of_day": {
+            "score": 20,
+            "value": "NIGHT",
+            "unit": "condition"
+          }
+        },
+        "runway_risk_index": 61,
+        "risk_category": "HIGH",
+        "status": "CAUTION",
+        "rri_p05": 47,
+        "rri_p95": 67,
+        "weather": [],
+        "ceiling": null,
+        "visibility": 10,
+        "warnings": [
+          "Night operations"
+        ],
+        "time_factors": {
+          "time_risk_points": 20,
+          "time_period": "NIGHT",
+          "risk_reasons": [
+            "Night operations"
+          ],
+          "sun_position": {
+            "zenith": 114.40525139604271,
+            "azimuth": 137.83847367325495
+          }
+        },
+        "plain_summary": "Exercise caution when landing or taking off on Runway 17L/35R at KDFW due to the high risk indicated by the Runway Risk Index, despite the favorable wind conditions and clear"
+      },
+      {
+        "runway": "17R/35L",
+        "heading": 180,
+        "headwind_kt": 4,
+        "crosswind_kt": 1,
+        "gust_headwind_kt": 0,
+        "gust_crosswind_kt": 0,
+        "tailwind": true,
+        "gust_tailwind": false,
+        "density_altitude_ft": 1189,
+        "runway_risk_contributors": {
+          "tailwind": {
+            "score": 24,
+            "value": 4,
+            "unit": "kt"
+          },
+          "crosswind": {
+            "score": 2,
+            "value": 1,
+            "unit": "kt"
+          },
+          "density_altitude_diff": {
+            "score": 15.06,
+            "value": 1004,
+            "unit": "ft"
+          },
+          "time_of_day": {
+            "score": 20,
+            "value": "NIGHT",
+            "unit": "condition"
+          }
+        },
+        "runway_risk_index": 61,
+        "risk_category": "HIGH",
+        "status": "CAUTION",
+        "rri_p05": 47,
+        "rri_p95": 67,
+        "weather": [],
+        "ceiling": null,
+        "visibility": 10,
+        "warnings": [
+          "Night operations"
+        ],
+        "time_factors": {
+          "time_risk_points": 20,
+          "time_period": "NIGHT",
+          "risk_reasons": [
+            "Night operations"
+          ],
+          "sun_position": {
+            "zenith": 114.4075996044578,
+            "azimuth": 137.84191349540112
+          }
+        },
+        "plain_summary": "Exercise caution when landing or taking off from Runway 17R/35L at KDFW due to the high risk indicated by the Runway Risk Index, despite favorable weather conditions and minimal wind"
+      },
+      {
+        "runway": "18L/36R",
+        "heading": 180,
+        "headwind_kt": 4,
+        "crosswind_kt": 1,
+        "gust_headwind_kt": 0,
+        "gust_crosswind_kt": 0,
+        "tailwind": true,
+        "gust_tailwind": false,
+        "density_altitude_ft": 1189,
+        "runway_risk_contributors": {
+          "tailwind": {
+            "score": 24,
+            "value": 4,
+            "unit": "kt"
+          },
+          "crosswind": {
+            "score": 2,
+            "value": 1,
+            "unit": "kt"
+          },
+          "density_altitude_diff": {
+            "score": 15.06,
+            "value": 1004,
+            "unit": "ft"
+          },
+          "time_of_day": {
+            "score": 20,
+            "value": "NIGHT",
+            "unit": "condition"
+          }
+        },
+        "runway_risk_index": 61,
+        "risk_category": "HIGH",
+        "status": "CAUTION",
+        "rri_p05": 47,
+        "rri_p95": 67,
+        "weather": [],
+        "ceiling": null,
+        "visibility": 10,
+        "warnings": [
+          "Night operations"
+        ],
+        "time_factors": {
+          "time_risk_points": 20,
+          "time_period": "NIGHT",
+          "risk_reasons": [
+            "Night operations"
+          ],
+          "sun_position": {
+            "zenith": 114.4075996044578,
+            "azimuth": 137.84191349540112
+          }
+        },
+        "plain_summary": "Exercise caution when landing or taking off from Runway 18L/36R at KDFW due to the high risk indicated by the Runway Risk Index of 61/100, despite favorable"
+      },
+      {
+        "runway": "18R/36L",
+        "heading": 180,
+        "headwind_kt": 4,
+        "crosswind_kt": 1,
+        "gust_headwind_kt": 0,
+        "gust_crosswind_kt": 0,
+        "tailwind": true,
+        "gust_tailwind": false,
+        "density_altitude_ft": 1189,
+        "runway_risk_contributors": {
+          "tailwind": {
+            "score": 24,
+            "value": 4,
+            "unit": "kt"
+          },
+          "crosswind": {
+            "score": 2,
+            "value": 1,
+            "unit": "kt"
+          },
+          "density_altitude_diff": {
+            "score": 15.06,
+            "value": 1004,
+            "unit": "ft"
+          },
+          "time_of_day": {
+            "score": 20,
+            "value": "NIGHT",
+            "unit": "condition"
+          }
+        },
+        "runway_risk_index": 61,
+        "risk_category": "HIGH",
+        "status": "CAUTION",
+        "rri_p05": 47,
+        "rri_p95": 67,
+        "weather": [],
+        "ceiling": null,
+        "visibility": 10,
+        "warnings": [
+          "Night operations"
+        ],
+        "time_factors": {
+          "time_risk_points": 20,
+          "time_period": "NIGHT",
+          "risk_reasons": [
+            "Night operations"
+          ],
+          "sun_position": {
+            "zenith": 114.40994765716842,
+            "azimuth": 137.84535350969165
+          }
+        },
+        "plain_summary": "Exercise caution when landing or taking off at KDFW on Runway 18R/36L due to the high runway risk index of 61/100 and the slight crosswind component."
+      }
+    ]
+  }
