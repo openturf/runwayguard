@@ -47,7 +47,7 @@ def calculate_probabilistic_rri_monte_carlo(
             perturbed_wind_speed, 
             perturbed_wind_gust, 
             p_is_head, p_gust_is_head, 
-            da_diff, metar_data, lat, lon, rwy_heading
+            da_diff, metar_data, lat, lon, rwy_heading, None
         )
         rri_samples.append(current_rri_score)
 

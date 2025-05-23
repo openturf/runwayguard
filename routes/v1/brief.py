@@ -167,7 +167,7 @@ async def brief(request: Request, req: BriefRequest):
                 
                 # Calculate RRI with time factors
                 rri, rri_contributors = calculate_rri(head, cross, gust_head, gust_cross, wind_speed, wind_gust, 
-                              is_head, gust_is_head, da_diff, metar, lat, lon, rwy_heading)
+                              is_head, gust_is_head, da_diff, metar, lat, lon, rwy_heading, notams)
                 
                 # Get time-based risk factors for warnings
                 time_factors = calculate_time_risk_factor(datetime.utcnow(), lat, lon, rwy_heading) if lat and lon else None
@@ -192,6 +192,18 @@ async def brief(request: Request, req: BriefRequest):
             warnings = []
             if time_factors:
                 warnings.extend(time_factors["risk_reasons"])
+            
+            # Add new risk factor warnings
+            if "icing_conditions" in rri_contributors:
+                warnings.extend(rri_contributors["icing_conditions"]["value"])
+            if "temperature_performance" in rri_contributors:
+                warnings.extend(rri_contributors["temperature_performance"]["value"])
+            if "wind_shear_risk" in rri_contributors:
+                warnings.extend(rri_contributors["wind_shear_risk"]["value"])
+            if "enhanced_weather" in rri_contributors:
+                warnings.extend(rri_contributors["enhanced_weather"]["value"])
+            if "notam_risks" in rri_contributors:
+                warnings.extend(rri_contributors["notam_risks"]["value"])
             
             # Check weather conditions
             weather = metar.get("weather", [])

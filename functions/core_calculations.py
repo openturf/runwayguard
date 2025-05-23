@@ -41,9 +41,171 @@ def gust_components(rwy_heading_deg, wind_dir_deg, gust_speed_kt):
     cross = gust_speed_kt * math.sin(rad_diff)
     return round(abs(head)), round(abs(cross)), head >= 0
 
-def calculate_rri(head, cross, gust_head, gust_cross, wind_speed, wind_gust, is_head, gust_is_head, da_diff, metar_data, lat=None, lon=None, rwy_heading=None):
+def calculate_icing_risk(temp_c, metar_data):
+    """Calculate icing risk based on temperature and conditions"""
+    score = 0
+    reasons = []
+    
+    weather = metar_data.get("weather", [])
+    cloud_layers = metar_data.get("cloud_layers", [])
+    dewpoint_c = metar_data.get("dewpoint_c")
+    
+    # Known icing conditions
+    if any("FZ" in condition for condition in weather):
+        score += 30
+        reasons.append("Freezing precipitation reported")
+    
+    # Temperature range icing risk
+    if -10 <= temp_c <= 2:
+        if any(layer.get("type") in ["BKN", "OVC"] for layer in cloud_layers):
+            if 0 <= temp_c <= 2:
+                score += 25
+                reasons.append("Prime icing conditions (0°C to +2°C with clouds)")
+            else:
+                score += 20
+                reasons.append("Icing conditions possible (-10°C to 0°C with clouds)")
+    
+    # Enhanced icing risk with dewpoint spread
+    if dewpoint_c is not None and temp_c is not None:
+        dewpoint_spread = temp_c - dewpoint_c
+        if dewpoint_spread <= 3 and -5 <= temp_c <= 5:
+            if any(layer.get("type") in ["BKN", "OVC"] for layer in cloud_layers):
+                score += 15
+                reasons.append(f"High humidity (spread {dewpoint_spread}°C) with clouds in icing range")
+    
+    # Ice pellets or other icing indicators
+    if any("IC" in condition or "PL" in condition for condition in weather):
+        score += 20
+        reasons.append("Ice pellets reported")
+    
+    return min(score, 30), reasons
+
+def calculate_temperature_performance_risk(temp_c, da_diff):
+    """Calculate risk from temperature extremes affecting performance"""
+    score = 0
+    reasons = []
+    
+    # Hot weather performance degradation
+    if temp_c > 35:
+        score += 15
+        reasons.append(f"High temperature ({temp_c}°C) reduces engine performance")
+    elif temp_c > 30:
+        score += 10
+        reasons.append(f"Elevated temperature ({temp_c}°C) affects performance")
+    
+    # Cold weather risks
+    if temp_c < -20:
+        score += 15
+        reasons.append(f"Very cold temperature ({temp_c}°C) affects systems/performance")
+    elif temp_c < -10:
+        score += 10
+        reasons.append(f"Cold temperature ({temp_c}°C) may affect systems")
+    
+    # Combined high DA and temperature
+    if temp_c > 30 and da_diff > 1000:
+        score += 10
+        reasons.append("High temperature combined with elevated density altitude")
+    
+    return min(score, 25), reasons
+
+def calculate_wind_shear_risk(metar_data, weather_data=None):
+    """Calculate wind shear risk from weather conditions"""
+    score = 0
+    reasons = []
+    
+    weather = metar_data.get("weather", [])
+    
+    # Thunderstorm-related wind shear
+    if any("TS" in condition for condition in weather):
+        score += 25
+        reasons.append("Thunderstorm wind shear risk")
+    
+    # Frontal activity indicators
+    if any("SH" in condition for condition in weather):
+        score += 15
+        reasons.append("Shower activity indicates possible wind shear")
+    
+    # LLWS reports would be parsed from weather_data if available
+    # This would require additional PIREP/AIRMET parsing
+    
+    return min(score, 25), reasons
+
+def parse_enhanced_weather_conditions(metar_data):
+    """Enhanced weather condition parsing for additional risks"""
+    score = 0
+    reasons = []
+    
+    weather = metar_data.get("weather", [])
+    
+    # Fog conditions
+    if any("FG" in condition for condition in weather):
+        score += 15
+        reasons.append("Fog conditions reduce visibility")
+    
+    # Mist/haze
+    if any("BR" in condition or "HZ" in condition for condition in weather):
+        score += 5
+        reasons.append("Mist or haze reducing visibility")
+    
+    # Dust/sand storms
+    if any("DU" in condition or "SA" in condition or "DS" in condition for condition in weather):
+        score += 20
+        reasons.append("Dust or sand affecting visibility")
+    
+    # Volcanic ash
+    if any("VA" in condition for condition in weather):
+        score += 100  # Automatic extreme
+        reasons.append("Volcanic ash - NO-GO condition")
+    
+    # Squall lines
+    if any("SQ" in condition for condition in weather):
+        score += 30
+        reasons.append("Squall line activity")
+    
+    return score, reasons
+
+def parse_notam_risks(notam_data, runway_id):
+    """Parse NOTAMs for additional runway risks"""
+    if not notam_data:
+        return 0, []
+    
+    score = 0
+    reasons = []
+    
+    # Get raw NOTAM text and validate it's not an error page
+    notam_text = notam_data.get("raw_text", "").upper() if isinstance(notam_data, dict) else str(notam_data).upper()
+    
+    # Skip parsing if this looks like an HTML error page
+    if any(html_indicator in notam_text for html_indicator in ["<!DOCTYPE", "<HTML>", "INVALID QUERY", "ERROR", "<TITLE>"]):
+        return 0, []
+    
+    # Skip if no actual NOTAM content
+    if len(notam_text.strip()) < 50 or "NOTAM" not in notam_text:
+        return 0, []
+    
+    # Runway contamination
+    if any(keyword in notam_text for keyword in ["SNOW", "ICE", "SLUSH", "WET", "CONTAMINATED"]):
+        score += 20
+        reasons.append("Runway contamination reported in NOTAMs")
+    
+    # Equipment outages
+    if any(keyword in notam_text for keyword in ["ILS", "PAPI", "VASI", "LIGHTS", "BEACON"]):
+        score += 10
+        reasons.append("Navigation/lighting equipment outage")
+    
+    # Construction/obstacles
+    if any(keyword in notam_text for keyword in ["CONSTRUCTION", "OBSTACLE", "WORK IN PROGRESS"]):
+        score += 15
+        reasons.append("Construction or obstacles reported")
+    
+    return min(score, 25), reasons
+
+def calculate_rri(head, cross, gust_head, gust_cross, wind_speed, wind_gust, is_head, gust_is_head, da_diff, metar_data, lat=None, lon=None, rwy_heading=None, notam_data=None):
     score = 0
     contributors = {}
+    
+    # Get temperature for additional calculations
+    temp_c = metar_data.get("temp_c", 15)
     
     # Base wind components (max 30 points)
     if not is_head:
@@ -89,6 +251,34 @@ def calculate_rri(head, cross, gust_head, gust_cross, wind_speed, wind_gust, is_
         if time_factors["time_risk_points"] > 0:
             contributors["time_of_day"] = {"score": time_factors["time_risk_points"], "value": time_factors["time_period"], "unit": "condition"}
             score += time_factors["time_risk_points"]
+    
+    # NEW: Icing risk assessment (max 30 points)
+    icing_score, icing_reasons = calculate_icing_risk(temp_c, metar_data)
+    if icing_score > 0:
+        contributors["icing_conditions"] = {"score": icing_score, "value": icing_reasons, "unit": "conditions"}
+        score += icing_score
+    
+    # NEW: Temperature performance risk (max 25 points)
+    temp_perf_score, temp_perf_reasons = calculate_temperature_performance_risk(temp_c, da_diff)
+    if temp_perf_score > 0:
+        contributors["temperature_performance"] = {"score": temp_perf_score, "value": temp_perf_reasons, "unit": "conditions"}
+        score += temp_perf_score
+    
+    # NEW: Wind shear risk (max 25 points)
+    ws_score, ws_reasons = calculate_wind_shear_risk(metar_data)
+    if ws_score > 0:
+        contributors["wind_shear_risk"] = {"score": ws_score, "value": ws_reasons, "unit": "conditions"}
+        score += ws_score
+    
+    # NEW: Enhanced weather conditions
+    enhanced_wx_score, enhanced_wx_reasons = parse_enhanced_weather_conditions(metar_data)
+    if enhanced_wx_score > 0:
+        if enhanced_wx_score >= 100:
+            contributors["volcanic_ash"] = {"score": enhanced_wx_score, "value": enhanced_wx_reasons, "unit": "conditions"}
+            score = 100  # Automatic EXTREME
+        else:
+            contributors["enhanced_weather"] = {"score": enhanced_wx_score, "value": enhanced_wx_reasons, "unit": "conditions"}
+            score += enhanced_wx_score
         
     # Weather phenomena (can push score above 100)
     weather = metar_data.get("weather", [])
@@ -150,6 +340,12 @@ def calculate_rri(head, cross, gust_head, gust_cross, wind_speed, wind_gust, is_
             contributors["heavy_precipitation"] = {"score": 20, "value": True, "unit": "boolean"}
             score += 20
         
+    # NEW: NOTAM risks (max 25 points)
+    notam_score, notam_reasons = parse_notam_risks(notam_data, rwy_heading)
+    if notam_score > 0:
+        contributors["notam_risks"] = {"score": notam_score, "value": notam_reasons, "unit": "conditions"}
+        score += notam_score
+    
     return round(min(100, score)), contributors
 
 def get_rri_category(rri):

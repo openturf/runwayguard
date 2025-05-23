@@ -35,6 +35,7 @@ async def fetch_metar(icao: str) -> Dict[str, Any]:
             "wind_gust": 0, 
             "altim_in_hg": 29.92, 
             "temp_c": 15, 
+            "dewpoint_c": None,
             "ceiling": None,
             "cloud_layers": [],
             "visibility": None,
@@ -82,6 +83,11 @@ async def fetch_metar(icao: str) -> Dict[str, Any]:
                             data["temp_c"] = -int(temp_str[1:])
                         else:
                             data["temp_c"] = int(temp_str)
+                        
+                        if dew_str.startswith("M"):
+                            data["dewpoint_c"] = -int(dew_str[1:])
+                        else:
+                            data["dewpoint_c"] = int(dew_str)
                         temp_c_found = True
                 except (ValueError, IndexError):
                     logger.warning(f"Failed to parse temperature from: {part}")
@@ -176,10 +182,10 @@ async def fetch_notams(icao: str) -> Dict[str, Any]:
                     if len(parts) > 1:
                         rwy = parts[1].split()[0].strip()
                         closed_runways.append(rwy)
-            return {"closed_runways": closed_runways}
+            return {"closed_runways": closed_runways, "raw_text": text}
         except Exception as e:
             logger.error(f"Failed to parse NOTAMs: {e}")
-            return {"closed_runways": []}
+            return {"closed_runways": [], "raw_text": ""}
     return await cached_fetch(f"notams_{icao}", url, parser) 
 
 async def fetch_mis(loc="dfw"):
