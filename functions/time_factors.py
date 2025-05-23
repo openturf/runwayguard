@@ -1,3 +1,16 @@
+"""
+Time-Based Risk Factors
+
+This module calculates how sun position and time of day affect runway safety.
+The main things it tracks are night operations risk, twilight conditions, and
+sun glare that can blind pilots during takeoff or landing.
+
+It does the heavy solar math to figure out exactly where the sun is relative
+to your runway heading, then assigns risk points based on how much glare
+you might encounter. Night and twilight operations also get additional risk
+since visibility and depth perception are reduced.
+"""
+
 from datetime import datetime, timedelta
 import math
 from typing import Tuple
@@ -37,8 +50,8 @@ def calculate_sun_position(lat: float, lon: float, date: datetime) -> Tuple[floa
 def get_time_period(date: datetime, lat: float, lon: float) -> str:
     zenith, _ = calculate_sun_position(lat, lon, date)
     
-    if zenith < 90:  # Sun is above horizon
-        if zenith > 80:  # Twilight condition
+    if zenith < 90:
+        if zenith > 80:
             return "TWILIGHT"
         return "DAY"
     else:
@@ -51,25 +64,19 @@ def calculate_time_risk_factor(date: datetime, lat: float, lon: float, rwy_headi
     risk_points = 0
     risk_reasons = []
     
-    # Night operations risk
     if time_period == "NIGHT":
         risk_points += 20
         risk_reasons.append("Night operations")
     
-    # Twilight risk
     elif time_period == "TWILIGHT":
         risk_points += 15
         risk_reasons.append("Twilight conditions - reduced visibility and depth perception")
     
-    # Sun glare risk calculation
-    if zenith < 90:  # Only calculate glare if sun is above horizon
-        # Convert runway heading to azimuth for comparison
+    if zenith < 90:
         rwy_azimuth = (90 - rwy_heading) % 360
         
-        # Calculate angular difference between sun and runway
         angle_diff = min((rwy_azimuth - azimuth) % 360, (azimuth - rwy_azimuth) % 360)
         
-        # High glare risk when sun is within 15 degrees of runway heading
         if angle_diff <= 15 and zenith <= 20:
             risk_points += 25
             risk_reasons.append("Critical sun glare - sun directly ahead/behind")
@@ -78,7 +85,7 @@ def calculate_time_risk_factor(date: datetime, lat: float, lon: float, rwy_headi
             risk_reasons.append("Moderate sun glare")
     
     return {
-        "time_risk_points": min(risk_points, 30),  # Cap at 30 points
+        "time_risk_points": min(risk_points, 30),
         "time_period": time_period,
         "risk_reasons": risk_reasons,
         "sun_position": {

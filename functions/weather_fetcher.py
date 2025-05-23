@@ -1,12 +1,19 @@
 """
-Weather fetching functions for RunwayGuard.
-Handles all external API calls to weather services.
+Weather Data Fetching
+
+This module handles all the messy work of getting weather data from various FAA APIs
+and parsing it into something useful. The main function you'll care about is fetch_metar()
+which gets current weather conditions for an airport.
+
+It also handles TAFs (forecasts), NOTAMs (airport notices), and various other weather
+products like SIGMETs and PIREPs. The METAR parsing is pretty robust - it handles
+all the weird edge cases in aviation weather reporting.
+
+Everything is cached so we don't hammer the FAA servers, and it gracefully handles
+when APIs are down or return weird data.
 """
 
 import os
-import time
-import asyncio
-import httpx
 import logging
 from typing import Dict, Any, Optional
 from functions.caching import cached_fetch
@@ -49,26 +56,23 @@ async def fetch_metar(icao: str) -> Dict[str, Any]:
 
         parts = metar_text.split()
         for i, part in enumerate(parts):
-            # Date/time group is in format ddhhmmZ
             if part.endswith("Z") and len(part) == 7:
                 data["obs_time"] = part
                 
-            # Wind information format: dddssGssKT where ddd=direction, ss=speed, G=gust indicator
             if "KT" in part:
                 try:
-                    if "G" in part:  # Has gust
+                    if "G" in part:
                         gust_parts = part.split("G")
                         base_part = gust_parts[0]
                         data["wind_dir"] = int(base_part[:3])
                         data["wind_speed"] = int(base_part[3:])
                         data["wind_gust"] = int(gust_parts[1].replace("KT", ""))
-                    elif len(part) >= 7:  # Basic wind group (dddssKT)
+                    elif len(part) >= 7:
                         data["wind_dir"] = int(part[:3])
                         data["wind_speed"] = int(part[3:5])
                 except ValueError:
                     pass
                     
-            # Temperature/dewpoint group is in the format tt/dd where tt=temp
             if not temp_c_found and "/" in part and part.count('/') == 1:
                 try:
                     temp_str, dew_str = part.split('/')
@@ -93,11 +97,10 @@ async def fetch_metar(icao: str) -> Dict[str, Any]:
                     logger.warning(f"Failed to parse temperature from: {part}")
                     pass
                     
-            # Visibility in statute miles
             if "SM" in part:
                 try:
                     vis = part.replace("SM", "")
-                    if "/" in vis:  # Fractional visibility
+                    if "/" in vis:
                         num, den = vis.split("/")
                         data["visibility"] = float(num) / float(den)
                     else:
@@ -105,7 +108,6 @@ async def fetch_metar(icao: str) -> Dict[str, Any]:
                 except ValueError:
                     pass
                     
-            # Cloud layers
             if any(part.startswith(prefix) for prefix in ["SKC", "CLR", "FEW", "SCT", "BKN", "OVC"]):
                 try:
                     cloud_type = part[:3]
@@ -122,32 +124,27 @@ async def fetch_metar(icao: str) -> Dict[str, Any]:
                 except ValueError:
                     pass
                     
-            # Lightning information and weather phenomena
             if "LTG" in part:
                 data["lightning"] = part
                 data["weather"].add(part)
                 if i + 2 < len(parts) and "DSNT" in parts[i:i+2] and "ALQDS" in parts[i:i+3]:
                     data["weather"].add("LTG DSNT ALQDS")
                     
-            # Significant weather phenomena
             if any(wx in part for wx in ["TS", "GR", "+", "FC", "SH", "FZ", "BR", "FG", "RA", "VCTS"]):
                 data["weather"].add(part)
                 
-            # Thunderstorm timing
             if part.startswith("TSE") and len(part) >= 7:
                 try:
                     data["weather"].add(part)
                 except ValueError:
                     pass
                     
-            # Altimeter is in the format Adddd where dddd is the pressure in hundredths
             if part.startswith("A") and len(part) == 5:
                 try:
                     data["altim_in_hg"] = float(part[1:]) / 100
                 except ValueError:
                     pass
         
-        # Convert weather set back to list for JSON serialization
         data["weather"] = list(data["weather"])
         return data
     return await cached_fetch(f"metar_{icao}", url, parser)

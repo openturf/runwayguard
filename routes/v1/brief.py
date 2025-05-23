@@ -1,3 +1,19 @@
+"""
+Main API Endpoint for Runway Risk Analysis
+
+This is the heart of RunwayGuard - the /brief endpoint that takes an airport code
+and gives you a comprehensive runway risk assessment. It pulls weather data,
+calculates wind components, figures out density altitude effects, and runs
+everything through the advanced risk analysis engine.
+
+The endpoint handles different aircraft types and pilot experience levels to
+adjust risk thresholds appropriately. It also generates plain English summaries
+when OpenAI is configured, and provides detailed diagnostic information for
+understanding why certain risk scores were assigned.
+
+Rate limited to 20 requests per minute to keep things reasonable.
+"""
+
 import os
 import math
 import time
@@ -40,8 +56,8 @@ class APIError(Exception):
 
 class BriefRequest(BaseModel):
     icao: str
-    aircraft_type: Optional[str] = "light"  # c172, pa34, tbm, citation, etc.
-    pilot_experience: Optional[str] = "standard"  # student, private, instrument, commercial, atp
+    aircraft_type: Optional[str] = "light"
+    pilot_experience: Optional[str] = "standard"
     
     @validator('icao')
     def validate_icao(cls, v):
@@ -57,11 +73,9 @@ async def brief(request: Request, req: BriefRequest):
     icao = req.icao.upper()
     logger.info(f"Processing brief request for ICAO: {icao}, Aircraft: {req.aircraft_type}, Experience: {req.pilot_experience}")
     
-    # Get aircraft-specific configuration
     config = ConfigurationManager.get_config_for_aircraft(req.aircraft_type, req.pilot_experience)
     
     try:
-        # Fetch airport info first to validate airport exists
         airport = await fetch_airport_info(icao)
         if not airport or not airport.get("elevation"):
             logger.warning(f"Airport data not found or incomplete for ICAO: {icao}")
@@ -82,7 +96,6 @@ async def brief(request: Request, req: BriefRequest):
         
         logger.debug(f"Airport info retrieved for {icao}: {airport}")
         
-        # Fetch all weather data
         try:
             metar = await fetch_metar(icao)
             if not metar or not metar.get("raw"):
@@ -109,7 +122,6 @@ async def brief(request: Request, req: BriefRequest):
                 details={"icao": icao, "error": str(e)}
             )
             
-        # Fetch remaining data with individual error handling
         try:
             taf = await fetch_taf(icao)
             stationinfo = await fetch_stationinfo(icao)
@@ -125,9 +137,7 @@ async def brief(request: Request, req: BriefRequest):
             mis = await fetch_mis()
         except Exception as e:
             logger.error(f"Error fetching supplementary data for {icao}: {str(e)}")
-            # Continue processing with available data, log the error
             
-        # Process airport and weather data
         field_elev = airport.get("elevation")
         runways = airport.get("runways", [])
         mag_dec = airport.get("mag_dec")
@@ -155,7 +165,6 @@ async def brief(request: Request, req: BriefRequest):
                 logger.warning(f"Invalid runway data for {icao}: {rwy}")
                 continue
                 
-            # Check if runway is closed
             is_closed = any(rwy_id.startswith(crwy) or rwy_id.endswith(crwy) for crwy in closed_runways)
             if is_closed:
                 runway_results.append({
@@ -176,7 +185,6 @@ async def brief(request: Request, req: BriefRequest):
                 })
                 continue
                 
-            # Get station coordinates from stationinfo
             lat = stationinfo.get("latitude")
             lon = stationinfo.get("longitude")
             
@@ -189,19 +197,14 @@ async def brief(request: Request, req: BriefRequest):
                 if wind_gust > 0:
                     gust_head, gust_cross, gust_is_head = gust_components(rwy_heading, wind_dir, wind_gust)
                 
-                # Get runway length from runway data
                 runway_length = rwy.get("length")
                 
-                # Determine terrain factor (could be enhanced with actual terrain data)
                 terrain_factor = 1.0
-                # This could be enhanced with actual terrain/elevation data around the airport
-                # For now, we'll use elevation as a basic indicator
-                if field_elev > 5000:  # High elevation airports
+                if field_elev > 5000:
                     terrain_factor = 1.2
                 elif field_elev > 3000:
                     terrain_factor = 1.1
                 
-                # Calculate advanced RRI with enhanced modeling
                 rri, rri_contributors = calculate_advanced_rri(
                     head=head, 
                     cross=cross, 
@@ -220,14 +223,12 @@ async def brief(request: Request, req: BriefRequest):
                     runway_length=runway_length,
                     airport_elevation=field_elev,
                     terrain_factor=terrain_factor,
-                    historical_trend=None,  # Could be enhanced with historical weather data
-                    aircraft_category=req.aircraft_type  # Could be made configurable
+                    historical_trend=None,
+                    aircraft_category=req.aircraft_type
                 )
                 
-                # Get time-based risk factors for warnings
                 time_factors = calculate_time_risk_factor(datetime.utcnow(), lat, lon, rwy_heading) if lat and lon else None
                 
-                # Calculate probabilistic RRI
                 probabilistic_rri_results = {"rri_p05": None, "rri_p95": None}
                 if lat is not None and lon is not None:
                     probabilistic_rri_results = calculate_probabilistic_rri_monte_carlo(
@@ -248,7 +249,6 @@ async def brief(request: Request, req: BriefRequest):
             if time_factors:
                 warnings.extend(time_factors["risk_reasons"])
             
-            # Add comprehensive risk factor warnings from advanced analysis
             advanced_warning_contributors = [
                 "icing_conditions", "temperature_performance", "wind_shear_risk", 
                 "enhanced_weather", "notam_risks", "thermal_gradient", 
@@ -260,7 +260,6 @@ async def brief(request: Request, req: BriefRequest):
                 if contributor in rri_contributors and isinstance(rri_contributors[contributor]["value"], list):
                     warnings.extend(rri_contributors[contributor]["value"])
             
-            # Check weather conditions
             weather = metar.get("weather", [])
             ceiling = metar.get("ceiling")
             visibility = metar.get("visibility")
@@ -288,7 +287,6 @@ async def brief(request: Request, req: BriefRequest):
             if da_diff > 2000:
                 warnings.append(f"Density altitude {da} ft is > 2000 ft above field elevation.")
             
-            # Add performance-related warnings
             if runway_length and da_diff > 1000:
                 performance_factor = 1 + (da_diff / 10000)
                 effective_length = int(runway_length / performance_factor)
@@ -297,7 +295,6 @@ async def brief(request: Request, req: BriefRequest):
                 elif runway_length is None and da_diff > 500:
                     warnings.append(f"Runway length unknown - verify performance calculations for {da_diff}ft density altitude difference.")
                 
-            # Add diagnostic information for mild conditions
             diagnostic_info = {
                 "conditions_assessment": "mild" if rri < 50 else "challenging",
                 "primary_risk_factors": [
@@ -330,7 +327,6 @@ async def brief(request: Request, req: BriefRequest):
                 }
             }
             
-            # Add specific recommendations
             if runway_length is None:
                 diagnostic_info["recommendations"]["data_improvements"].append(
                     "Verify runway length from airport directory for performance calculations"
@@ -364,7 +360,6 @@ async def brief(request: Request, req: BriefRequest):
                     gust_info = f", gusting {wind_gust} kt" if wind_gust > 0 else ""
                     weather_info = ", ".join(weather) if weather else "No significant weather"
                     
-                    # Enhanced prompt with advanced risk factors
                     advanced_risks = []
                     for risk_type in ["thermal_gradient", "atmospheric_stability", "runway_performance", "precipitation_intensity", "turbulence_risk"]:
                         if risk_type in rri_contributors:
@@ -489,7 +484,6 @@ async def brief(request: Request, req: BriefRequest):
 @router.get("/brief/help")
 @limiter.limit("60/minute")
 async def brief_help(request: Request):
-    """Comprehensive guide for using the RunwayGuard Advanced RRI API"""
     return JSONResponse({
         "service": "RunwayGuard Advanced Runway Risk Intelligence (ARRI)",
         "version": "2.0.0",

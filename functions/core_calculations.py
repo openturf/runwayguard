@@ -1,4 +1,21 @@
-## Advanced Runway Risk Intelligence (ARRI) System
+"""
+RunwayGuard Core Risk Calculations
+
+This module handles all the heavy lifting for runway risk assessment. It takes weather data,
+runway conditions, and aircraft performance factors to calculate a risk score from 0-100.
+
+The main function you'll use is calculate_advanced_rri() which gives you the full analysis,
+or calculate_rri() for the basic version. Everything else here supports those calculations.
+
+Key components:
+- Wind analysis (headwind/tailwind/crosswind/gusts)
+- Density altitude effects on performance  
+- Weather hazards (thunderstorms, icing, low visibility)
+- Advanced atmospheric modeling for turbulence and thermal effects
+- Risk amplification when multiple factors combine
+
+The risk score maps to: 0-25 LOW, 26-50 MODERATE, 51-75 HIGH, 76-100 EXTREME
+"""
 
 import math
 import numpy as np
@@ -11,19 +28,16 @@ class AdvancedAtmosphericModel:
     
     @staticmethod
     def calculate_thermal_gradient_risk(temp_c: float, dewpoint_c: Optional[float], time_of_day: str) -> Tuple[int, List[str]]:
-        """Calculate thermal gradient effects on aircraft performance and turbulence"""
         score = 0
         reasons = []
         
         if dewpoint_c is not None:
             dewpoint_spread = temp_c - dewpoint_c
             
-            # High thermal activity risk
             if temp_c > 25 and dewpoint_spread > 10 and time_of_day in ["afternoon", "midday"]:
                 score += 15
                 reasons.append(f"Strong thermal activity expected (temp {temp_c}°C, spread {dewpoint_spread}°C)")
             
-            # Inversion risk (low level turbulence)
             if temp_c < 5 and dewpoint_spread < 3 and time_of_day in ["early_morning", "late_evening"]:
                 score += 10
                 reasons.append("Temperature inversion conditions may cause low-level turbulence")
@@ -32,21 +46,18 @@ class AdvancedAtmosphericModel:
     
     @staticmethod
     def calculate_stability_index(temp_c: float, dewpoint_c: Optional[float], wind_speed: int) -> Tuple[int, List[str]]:
-        """Calculate atmospheric stability and convective potential"""
         score = 0
         reasons = []
         
         if dewpoint_c is not None:
             dewpoint_spread = temp_c - dewpoint_c
             
-            # Convective instability
             if temp_c > 20 and dewpoint_spread < 5:
                 convective_risk = min(25, (30 - temp_c + (5 - dewpoint_spread)) * 2)
                 if convective_risk > 0:
                     score += convective_risk
                     reasons.append("High convective potential - thunderstorm development possible")
             
-            # Mechanical turbulence from wind shear
             if wind_speed > 20 and dewpoint_spread > 15:
                 score += 10
                 reasons.append("Mechanical turbulence likely due to strong winds and dry conditions")
@@ -59,12 +70,10 @@ class PerformanceRiskAnalyzer:
     @staticmethod
     def calculate_runway_performance_risk(runway_length: Optional[int], da_diff: int, 
                                         contamination: str = "dry") -> Tuple[int, List[str]]:
-        """Calculate runway performance adequacy risk"""
         score = 0
         reasons = []
         
         if runway_length is None:
-            # Provide estimated risk based on DA difference when runway length unknown
             if da_diff > 2000:
                 score = 15
                 reasons.append("Runway length unknown - significant performance degradation likely at high density altitude")
@@ -76,7 +85,6 @@ class PerformanceRiskAnalyzer:
                 reasons.append("Runway length unknown - verify runway adequacy for current density altitude")
             return score, reasons
         
-        # Contamination factors
         contamination_multipliers = {
             "dry": 1.0,
             "wet": 1.15,
@@ -88,9 +96,8 @@ class PerformanceRiskAnalyzer:
         
         effective_runway = runway_length / contamination_multipliers.get(contamination, 1.0)
         
-        # High density altitude performance degradation
         if da_diff > 1000:
-            performance_degradation = 1 + (da_diff / 10000)  # ~10% per 1000ft DA
+            performance_degradation = 1 + (da_diff / 10000)
             effective_runway /= performance_degradation
             
             if da_diff > 3000:
@@ -100,7 +107,6 @@ class PerformanceRiskAnalyzer:
                 score += 15
                 reasons.append(f"Notable performance degradation at {da_diff}ft density altitude")
         
-        # Runway length adequacy (assuming typical GA aircraft need 2000-3000ft)
         if effective_runway < 2000:
             score += 30
             reasons.append(f"Runway performance marginal: {int(effective_runway)}ft effective length")
@@ -115,12 +121,9 @@ class PerformanceRiskAnalyzer:
     
     @staticmethod
     def calculate_weight_performance_factor(da_diff: int, temp_c: float) -> float:
-        """Calculate weight performance factor for given conditions"""
-        # ISA standard: 15°C at sea level, -2°C per 1000ft
         isa_temp = 15 - (2 * (da_diff / 1000))
         temp_deviation = temp_c - isa_temp
         
-        # Performance degradation: ~1% per 100ft DA, additional 0.5% per degree above ISA
         degradation_factor = 1 + (da_diff * 0.0001) + (max(0, temp_deviation) * 0.005)
         return degradation_factor
 
@@ -129,11 +132,9 @@ class WeatherRiskAnalyzer:
     
     @staticmethod
     def calculate_precipitation_intensity_risk(weather: List[str]) -> Tuple[int, List[str]]:
-        """Advanced precipitation intensity and type analysis"""
         score = 0
         reasons = []
         
-        # Heavy precipitation categories
         heavy_precip_types = {
             "+RA": ("Heavy rain", 20),
             "+SN": ("Heavy snow", 25),
@@ -143,7 +144,6 @@ class WeatherRiskAnalyzer:
             "+GR": ("Heavy hail", 50)
         }
         
-        # Moderate precipitation
         moderate_precip_types = {
             "RA": ("Rain", 8),
             "SN": ("Snow", 12),
@@ -152,7 +152,6 @@ class WeatherRiskAnalyzer:
             "PL": ("Ice pellets", 15)
         }
         
-        # Light precipitation
         light_precip_types = {
             "-RA": ("Light rain", 3),
             "-SN": ("Light snow", 5),
@@ -182,11 +181,9 @@ class WeatherRiskAnalyzer:
     
     @staticmethod
     def calculate_turbulence_risk(wind_speed: int, wind_gust: int, terrain_factor: float = 1.0) -> Tuple[int, List[str]]:
-        """Calculate turbulence risk based on wind conditions and terrain"""
         score = 0
         reasons = []
         
-        # Gust factor analysis
         if wind_gust > 0:
             gust_factor = wind_gust / max(wind_speed, 1)
             if gust_factor > 2.0:
@@ -199,7 +196,6 @@ class WeatherRiskAnalyzer:
                 score += 10
                 reasons.append(f"Moderate gustiness: {wind_gust}kt gusts vs {wind_speed}kt steady")
         
-        # High wind turbulence
         if wind_speed > 25:
             score += 15
             reasons.append(f"Strong winds ({wind_speed}kt) likely causing turbulence")
@@ -207,7 +203,6 @@ class WeatherRiskAnalyzer:
             score += 10
             reasons.append(f"Fresh winds ({wind_speed}kt) may cause turbulence")
         
-        # Terrain enhancement
         if terrain_factor > 1.0:
             terrain_score = int((terrain_factor - 1.0) * 20)
             score += terrain_score
@@ -220,11 +215,9 @@ class RiskCorrelationEngine:
     
     @staticmethod
     def calculate_risk_amplification(contributors: Dict[str, Any]) -> Tuple[int, List[str]]:
-        """Calculate risk amplification when multiple factors combine"""
         amplification_score = 0
         reasons = []
         
-        # Get individual risk scores
         wind_risks = ["tailwind", "crosswind", "gust_differential", "gust_tailwind", "gust_crosswind"]
         weather_risks = ["thunderstorm", "lightning", "low_ceiling", "low_visibility", "icing_conditions"]
         performance_risks = ["density_altitude_diff", "temperature_performance"]
@@ -233,7 +226,6 @@ class RiskCorrelationEngine:
         weather_score = sum(contributors.get(risk, {}).get("score", 0) for risk in weather_risks)
         performance_score = sum(contributors.get(risk, {}).get("score", 0) for risk in performance_risks)
         
-        # Multi-domain risk amplification
         active_domains = sum([
             wind_score > 20,
             weather_score > 20,
@@ -244,7 +236,6 @@ class RiskCorrelationEngine:
             amplification_score = min(15, active_domains * 5)
             reasons.append(f"Multiple risk domains active: amplified concern")
         
-        # Specific dangerous combinations
         if contributors.get("icing_conditions") and contributors.get("low_ceiling"):
             amplification_score += 10
             reasons.append("Icing conditions with low ceiling: instrument approach risk")
@@ -264,44 +255,38 @@ class PredictiveRiskModel:
     
     @staticmethod
     def calculate_trend_risk(current_conditions: Dict, historical_trend: Optional[Dict] = None) -> Tuple[int, List[str]]:
-        """Calculate risk based on trending conditions"""
         score = 0
         reasons = []
         
         if not historical_trend:
             return 0, []
         
-        # Pressure trend analysis
         pressure_trend = historical_trend.get("pressure_trend")
         if pressure_trend:
-            if pressure_trend < -0.1:  # Rapid pressure drop
+            if pressure_trend < -0.1:
                 score += 15
                 reasons.append("Rapid pressure drop indicates approaching weather system")
             elif pressure_trend < -0.05:
                 score += 8
                 reasons.append("Pressure dropping - weather deterioration possible")
         
-        # Temperature trend with time of day
         temp_trend = historical_trend.get("temp_trend")
         current_hour = datetime.utcnow().hour
-        if temp_trend and current_hour in range(14, 18):  # Afternoon heating
+        if temp_trend and current_hour in range(14, 18):
             if temp_trend > 3 and current_conditions.get("temp_c", 0) > 25:
                 score += 10
                 reasons.append("Rapid afternoon heating increases convective activity risk")
         
         return min(score, 20), reasons
 
-# Enhanced core calculation functions with backward compatibility
 def pressure_alt(field_elev_ft, altim_in_hg):
     return field_elev_ft + (29.92 - altim_in_hg) * 1000
 
 def density_alt(field_elev_ft, temp_c, altim_in_hg):
-    # Validate inputs
     if not isinstance(field_elev_ft, (int, float)) or not isinstance(temp_c, (int, float)) or not isinstance(altim_in_hg, (int, float)):
         print(f"[density_alt] Invalid inputs: elev={field_elev_ft}, temp={temp_c}, altim={altim_in_hg}")
         return 0
         
-    # Sanity check temperature (-60°C to +50°C)
     if temp_c < -60 or temp_c > 50:
         print(f"[density_alt] Temperature out of range: {temp_c}°C")
         return 0
@@ -310,7 +295,6 @@ def density_alt(field_elev_ft, temp_c, altim_in_hg):
     isa_temp = 15 - 2 * (field_elev_ft / 1000)
     da = int(pa + 120 * (temp_c - isa_temp))
     
-    # Sanity check result (-1000 to +20000 ft)
     if da < -1000 or da > 20000:
         print(f"[density_alt] Result out of range: {da}ft")
         return 0
@@ -330,7 +314,6 @@ def gust_components(rwy_heading_deg, wind_dir_deg, gust_speed_kt):
     return round(abs(head)), round(abs(cross)), head >= 0
 
 def calculate_icing_risk(temp_c, metar_data):
-    """Calculate icing risk based on temperature and conditions"""
     score = 0
     reasons = []
     
@@ -338,12 +321,10 @@ def calculate_icing_risk(temp_c, metar_data):
     cloud_layers = metar_data.get("cloud_layers", [])
     dewpoint_c = metar_data.get("dewpoint_c")
     
-    # Known icing conditions
     if any("FZ" in condition for condition in weather):
         score += 30
         reasons.append("Freezing precipitation reported")
     
-    # Temperature range icing risk
     if -10 <= temp_c <= 2:
         if any(layer.get("type") in ["BKN", "OVC"] for layer in cloud_layers):
             if 0 <= temp_c <= 2:
@@ -353,7 +334,6 @@ def calculate_icing_risk(temp_c, metar_data):
                 score += 20
                 reasons.append("Icing conditions possible (-10°C to 0°C with clouds)")
     
-    # Enhanced icing risk with dewpoint spread
     if dewpoint_c is not None and temp_c is not None:
         dewpoint_spread = temp_c - dewpoint_c
         if dewpoint_spread <= 3 and -5 <= temp_c <= 5:
@@ -361,7 +341,6 @@ def calculate_icing_risk(temp_c, metar_data):
                 score += 15
                 reasons.append(f"High humidity (spread {dewpoint_spread}°C) with clouds in icing range")
     
-    # Ice pellets or other icing indicators
     if any("IC" in condition or "PL" in condition for condition in weather):
         score += 20
         reasons.append("Ice pellets reported")
@@ -369,11 +348,9 @@ def calculate_icing_risk(temp_c, metar_data):
     return min(score, 30), reasons
 
 def calculate_temperature_performance_risk(temp_c, da_diff):
-    """Calculate risk from temperature extremes affecting performance"""
     score = 0
     reasons = []
     
-    # Hot weather performance degradation
     if temp_c > 35:
         score += 15
         reasons.append(f"High temperature ({temp_c}°C) reduces engine performance")
@@ -381,7 +358,6 @@ def calculate_temperature_performance_risk(temp_c, da_diff):
         score += 10
         reasons.append(f"Elevated temperature ({temp_c}°C) affects performance")
     
-    # Cold weather risks
     if temp_c < -20:
         score += 15
         reasons.append(f"Very cold temperature ({temp_c}°C) affects systems/performance")
@@ -389,7 +365,6 @@ def calculate_temperature_performance_risk(temp_c, da_diff):
         score += 10
         reasons.append(f"Cold temperature ({temp_c}°C) may affect systems")
     
-    # Combined high DA and temperature
     if temp_c > 30 and da_diff > 1000:
         score += 10
         reasons.append("High temperature combined with elevated density altitude")
@@ -397,55 +372,43 @@ def calculate_temperature_performance_risk(temp_c, da_diff):
     return min(score, 25), reasons
 
 def calculate_wind_shear_risk(metar_data, weather_data=None):
-    """Calculate wind shear risk from weather conditions"""
     score = 0
     reasons = []
     
     weather = metar_data.get("weather", [])
     
-    # Thunderstorm-related wind shear
     if any("TS" in condition for condition in weather):
         score += 25
         reasons.append("Thunderstorm wind shear risk")
     
-    # Frontal activity indicators
     if any("SH" in condition for condition in weather):
         score += 15
         reasons.append("Shower activity indicates possible wind shear")
     
-    # LLWS reports would be parsed from weather_data if available
-    # This would require additional PIREP/AIRMET parsing
-    
     return min(score, 25), reasons
 
 def parse_enhanced_weather_conditions(metar_data):
-    """Enhanced weather condition parsing for additional risks"""
     score = 0
     reasons = []
     
     weather = metar_data.get("weather", [])
     
-    # Fog conditions
     if any("FG" in condition for condition in weather):
         score += 15
         reasons.append("Fog conditions reduce visibility")
     
-    # Mist/haze
     if any("BR" in condition or "HZ" in condition for condition in weather):
         score += 5
         reasons.append("Mist or haze reducing visibility")
     
-    # Dust/sand storms
     if any("DU" in condition or "SA" in condition or "DS" in condition for condition in weather):
         score += 20
         reasons.append("Dust or sand affecting visibility")
     
-    # Volcanic ash
     if any("VA" in condition for condition in weather):
-        score += 100  # Automatic extreme
+        score += 100
         reasons.append("Volcanic ash - NO-GO condition")
     
-    # Squall lines
     if any("SQ" in condition for condition in weather):
         score += 30
         reasons.append("Squall line activity")
@@ -453,35 +416,28 @@ def parse_enhanced_weather_conditions(metar_data):
     return score, reasons
 
 def parse_notam_risks(notam_data, runway_id):
-    """Parse NOTAMs for additional runway risks"""
     if not notam_data:
         return 0, []
     
     score = 0
     reasons = []
     
-    # Get raw NOTAM text and validate it's not an error page
     notam_text = notam_data.get("raw_text", "").upper() if isinstance(notam_data, dict) else str(notam_data).upper()
     
-    # Skip parsing if this looks like an HTML error page
     if any(html_indicator in notam_text for html_indicator in ["<!DOCTYPE", "<HTML>", "INVALID QUERY", "ERROR", "<TITLE>"]):
         return 0, []
     
-    # Skip if no actual NOTAM content
     if len(notam_text.strip()) < 50 or "NOTAM" not in notam_text:
         return 0, []
     
-    # Runway contamination
     if any(keyword in notam_text for keyword in ["SNOW", "ICE", "SLUSH", "WET", "CONTAMINATED"]):
         score += 20
         reasons.append("Runway contamination reported in NOTAMs")
     
-    # Equipment outages
     if any(keyword in notam_text for keyword in ["ILS", "PAPI", "VASI", "LIGHTS", "BEACON"]):
         score += 10
         reasons.append("Navigation/lighting equipment outage")
     
-    # Construction/obstacles
     if any(keyword in notam_text for keyword in ["CONSTRUCTION", "OBSTACLE", "WORK IN PROGRESS"]):
         score += 15
         reasons.append("Construction or obstacles reported")
@@ -500,14 +456,12 @@ def calculate_advanced_rri(head, cross, gust_head, gust_cross, wind_speed, wind_
     score = 0
     contributors = {}
     
-    # Get basic weather data
     temp_c = metar_data.get("temp_c", 15)
     dewpoint_c = metar_data.get("dewpoint_c")
     weather = metar_data.get("weather", [])
     ceiling = metar_data.get("ceiling")
     visibility = metar_data.get("visibility")
     
-    # Determine time of day for advanced modeling
     current_hour = datetime.utcnow().hour
     if 6 <= current_hour < 10:
         time_of_day = "early_morning"
@@ -520,54 +474,47 @@ def calculate_advanced_rri(head, cross, gust_head, gust_cross, wind_speed, wind_
     else:
         time_of_day = "late_evening"
     
-    # Initialize advanced analysis models
     atm_model = AdvancedAtmosphericModel()
     perf_analyzer = PerformanceRiskAnalyzer()
     weather_analyzer = WeatherRiskAnalyzer()
     correlation_engine = RiskCorrelationEngine()
     predictive_model = PredictiveRiskModel()
     
-    # Base wind components (max 30 points) - EXISTING LOGIC
     if not is_head:
-        tailwind_score = min(30, head * 6)  # 5kt tailwind = 30 points
+        tailwind_score = min(30, head * 6)
         if tailwind_score > 0:
             contributors["tailwind"] = {"score": tailwind_score, "value": head, "unit": "kt"}
             score += tailwind_score
     if cross > 0:
-        crosswind_score = min(30, (cross / 15) * 30)  # 15kt crosswind = 30 points
+        crosswind_score = min(30, (cross / 15) * 30)
         if crosswind_score > 0:
             contributors["crosswind"] = {"score": crosswind_score, "value": cross, "unit": "kt"}
             score += crosswind_score
         
-    # Gust factors (max 40 points) - EXISTING LOGIC
     if wind_gust > 0:
         gust_diff_val = wind_gust - wind_speed
-        gust_diff_score = min(20, (gust_diff_val / 10) * 20)  # 10kt differential = 20 points
+        gust_diff_score = min(20, (gust_diff_val / 10) * 20)
         if gust_diff_score > 0:
             contributors["gust_differential"] = {"score": gust_diff_score, "value": gust_diff_val, "unit": "kt"}
             score += gust_diff_score
         
         if not gust_is_head:
-            gust_tailwind_score = min(10, (gust_head / 10) * 10)  # 10kt gust tailwind = 10 points
+            gust_tailwind_score = min(10, (gust_head / 10) * 10)
             if gust_tailwind_score > 0:
                 contributors["gust_tailwind"] = {"score": gust_tailwind_score, "value": gust_head, "unit": "kt"}
                 score += gust_tailwind_score
         if gust_cross > 0:
-            gust_crosswind_score = min(10, (gust_cross / 20) * 10)  # 20kt gust crosswind = 10 points
+            gust_crosswind_score = min(10, (gust_cross / 20) * 10)
             if gust_crosswind_score > 0:
                 contributors["gust_crosswind"] = {"score": gust_crosswind_score, "value": gust_cross, "unit": "kt"}
                 score += gust_crosswind_score
             
-    # Density altitude factor (max 30 points) - EXISTING LOGIC
     if da_diff > 0:
-        da_score = min(30, (da_diff / 2000) * 30)  # 2000ft above field = 30 points
+        da_score = min(30, (da_diff / 2000) * 30)
         if da_score > 0:
             contributors["density_altitude_diff"] = {"score": da_score, "value": da_diff, "unit": "ft"}
             score += da_score
     
-    # NEW ADVANCED ASSESSMENTS
-    
-    # Advanced atmospheric modeling
     thermal_score, thermal_reasons = atm_model.calculate_thermal_gradient_risk(temp_c, dewpoint_c, time_of_day)
     if thermal_score > 0:
         contributors["thermal_gradient"] = {"score": thermal_score, "value": thermal_reasons, "unit": "conditions"}
@@ -578,8 +525,6 @@ def calculate_advanced_rri(head, cross, gust_head, gust_cross, wind_speed, wind_
         contributors["atmospheric_stability"] = {"score": stability_score, "value": stability_reasons, "unit": "conditions"}
         score += stability_score
     
-    # Advanced performance analysis
-    # Determine contamination from weather/NOTAMs
     contamination = "dry"
     if any("SN" in condition for condition in weather):
         contamination = "snow"
@@ -601,7 +546,6 @@ def calculate_advanced_rri(head, cross, gust_head, gust_cross, wind_speed, wind_
         contributors["runway_performance"] = {"score": perf_score, "value": perf_reasons, "unit": "conditions"}
         score += perf_score
     
-    # Advanced weather analysis
     precip_score, precip_reasons = weather_analyzer.calculate_precipitation_intensity_risk(weather)
     if precip_score > 0:
         contributors["precipitation_intensity"] = {"score": precip_score, "value": precip_reasons, "unit": "conditions"}
@@ -612,21 +556,18 @@ def calculate_advanced_rri(head, cross, gust_head, gust_cross, wind_speed, wind_
         contributors["turbulence_risk"] = {"score": turb_score, "value": turb_reasons, "unit": "conditions"}
         score += turb_score
     
-    # Predictive trend analysis
     if historical_trend:
         trend_score, trend_reasons = predictive_model.calculate_trend_risk(metar_data, historical_trend)
         if trend_score > 0:
             contributors["trend_analysis"] = {"score": trend_score, "value": trend_reasons, "unit": "conditions"}
             score += trend_score
     
-    # Time of day factors - EXISTING LOGIC
     if lat is not None and lon is not None and rwy_heading is not None:
         time_factors = calculate_time_risk_factor(datetime.utcnow(), lat, lon, rwy_heading)
         if time_factors["time_risk_points"] > 0:
             contributors["time_of_day"] = {"score": time_factors["time_risk_points"], "value": time_factors["time_period"], "unit": "condition"}
             score += time_factors["time_risk_points"]
     
-    # EXISTING WEATHER ASSESSMENTS (Icing, Temperature, Wind Shear, Enhanced Weather, NOTAMs)
     icing_score, icing_reasons = calculate_icing_risk(temp_c, metar_data)
     if icing_score > 0:
         contributors["icing_conditions"] = {"score": icing_score, "value": icing_reasons, "unit": "conditions"}
@@ -646,7 +587,7 @@ def calculate_advanced_rri(head, cross, gust_head, gust_cross, wind_speed, wind_
     if enhanced_wx_score > 0:
         if enhanced_wx_score >= 100:
             contributors["volcanic_ash"] = {"score": enhanced_wx_score, "value": enhanced_wx_reasons, "unit": "conditions"}
-            score = 100  # Automatic EXTREME
+            score = 100
         else:
             contributors["enhanced_weather"] = {"score": enhanced_wx_score, "value": enhanced_wx_reasons, "unit": "conditions"}
             score += enhanced_wx_score
@@ -656,16 +597,14 @@ def calculate_advanced_rri(head, cross, gust_head, gust_cross, wind_speed, wind_
         contributors["notam_risks"] = {"score": notam_score, "value": notam_reasons, "unit": "conditions"}
         score += notam_score
     
-    # EXISTING CRITICAL WEATHER HANDLING
     if any("TS" in weather_condition for weather_condition in weather):
         contributors["thunderstorm"] = {"score": 100, "value": True, "unit": "boolean"}
-        score = 100  # Active thunderstorm = automatic EXTREME
+        score = 100
         
     if any("LTG" in weather_condition for weather_condition in weather):
         contributors["lightning"] = {"score": 25, "value": True, "unit": "boolean"}
-        score += 25  # Lightning presence increases risk
+        score += 25
         
-    # EXISTING CEILING AND VISIBILITY FACTORS
     if score < 100 and ceiling is not None:
         ceiling_score = 0
         if ceiling < 500:
@@ -694,22 +633,20 @@ def calculate_advanced_rri(head, cross, gust_head, gust_cross, wind_speed, wind_
             contributors["low_visibility"] = {"score": visibility_score, "value": visibility, "unit": "SM"}
             score += visibility_score
     
-    # EXISTING OTHER SIGNIFICANT WEATHER
     if score < 100:
-        if any("GR" in weather_condition for weather_condition in weather):  # Hail
+        if any("GR" in weather_condition for weather_condition in weather):
             contributors["hail"] = {"score": 40, "value": True, "unit": "boolean"}
             score += 40
-        if any("FC" in weather_condition for weather_condition in weather):  # Funnel cloud
+        if any("FC" in weather_condition for weather_condition in weather):
             contributors["funnel_cloud"] = {"score": 100, "value": True, "unit": "boolean"}
-            score = 100  # Automatic EXTREME
-        if any("FZ" in weather_condition for weather_condition in weather):  # Freezing precip
+            score = 100
+        if any("FZ" in weather_condition for weather_condition in weather):
             contributors["freezing_precipitation"] = {"score": 30, "value": True, "unit": "boolean"}
             score += 30
-        if any("+" in weather_condition for weather_condition in weather):   # Heavy precip
+        if any("+" in weather_condition for weather_condition in weather):
             contributors["heavy_precipitation"] = {"score": 20, "value": True, "unit": "boolean"}
             score += 20
     
-    # NEW: Risk correlation and amplification analysis
     amplification_score, amplification_reasons = correlation_engine.calculate_risk_amplification(contributors)
     if amplification_score > 0:
         contributors["risk_amplification"] = {"score": amplification_score, "value": amplification_reasons, "unit": "conditions"}
@@ -725,98 +662,85 @@ def calculate_rri(head, cross, gust_head, gust_cross, wind_speed, wind_gust, is_
     score = 0
     contributors = {}
     
-    # Get temperature for additional calculations
     temp_c = metar_data.get("temp_c", 15)
     
-    # Base wind components (max 30 points)
     if not is_head:
-        tailwind_score = min(30, head * 6)  # 5kt tailwind = 30 points
+        tailwind_score = min(30, head * 6)
         if tailwind_score > 0:
             contributors["tailwind"] = {"score": tailwind_score, "value": head, "unit": "kt"}
             score += tailwind_score
     if cross > 0:
-        crosswind_score = min(30, (cross / 15) * 30)  # 15kt crosswind = 30 points
+        crosswind_score = min(30, (cross / 15) * 30)
         if crosswind_score > 0:
             contributors["crosswind"] = {"score": crosswind_score, "value": cross, "unit": "kt"}
             score += crosswind_score
         
-    # Gust factors (max 40 points)
     if wind_gust > 0:
         gust_diff_val = wind_gust - wind_speed
-        gust_diff_score = min(20, (gust_diff_val / 10) * 20)  # 10kt differential = 20 points
+        gust_diff_score = min(20, (gust_diff_val / 10) * 20)
         if gust_diff_score > 0:
             contributors["gust_differential"] = {"score": gust_diff_score, "value": gust_diff_val, "unit": "kt"}
             score += gust_diff_score
         
         if not gust_is_head:
-            gust_tailwind_score = min(10, (gust_head / 10) * 10)  # 10kt gust tailwind = 10 points
+            gust_tailwind_score = min(10, (gust_head / 10) * 10)
             if gust_tailwind_score > 0:
                 contributors["gust_tailwind"] = {"score": gust_tailwind_score, "value": gust_head, "unit": "kt"}
                 score += gust_tailwind_score
         if gust_cross > 0:
-            gust_crosswind_score = min(10, (gust_cross / 20) * 10)  # 20kt gust crosswind = 10 points
+            gust_crosswind_score = min(10, (gust_cross / 20) * 10)
             if gust_crosswind_score > 0:
                 contributors["gust_crosswind"] = {"score": gust_crosswind_score, "value": gust_cross, "unit": "kt"}
                 score += gust_crosswind_score
             
-    # Density altitude factor (max 30 points)
     if da_diff > 0:
-        da_score = min(30, (da_diff / 2000) * 30)  # 2000ft above field = 30 points
+        da_score = min(30, (da_diff / 2000) * 30)
         if da_score > 0:
             contributors["density_altitude_diff"] = {"score": da_score, "value": da_diff, "unit": "ft"}
             score += da_score
         
-    # Time of day factors (max 30 points)
     if lat is not None and lon is not None and rwy_heading is not None:
         time_factors = calculate_time_risk_factor(datetime.utcnow(), lat, lon, rwy_heading)
         if time_factors["time_risk_points"] > 0:
             contributors["time_of_day"] = {"score": time_factors["time_risk_points"], "value": time_factors["time_period"], "unit": "condition"}
             score += time_factors["time_risk_points"]
     
-    # NEW: Icing risk assessment (max 30 points)
     icing_score, icing_reasons = calculate_icing_risk(temp_c, metar_data)
     if icing_score > 0:
         contributors["icing_conditions"] = {"score": icing_score, "value": icing_reasons, "unit": "conditions"}
         score += icing_score
     
-    # NEW: Temperature performance risk (max 25 points)
     temp_perf_score, temp_perf_reasons = calculate_temperature_performance_risk(temp_c, da_diff)
     if temp_perf_score > 0:
         contributors["temperature_performance"] = {"score": temp_perf_score, "value": temp_perf_reasons, "unit": "conditions"}
         score += temp_perf_score
     
-    # NEW: Wind shear risk (max 25 points)
     ws_score, ws_reasons = calculate_wind_shear_risk(metar_data)
     if ws_score > 0:
         contributors["wind_shear_risk"] = {"score": ws_score, "value": ws_reasons, "unit": "conditions"}
         score += ws_score
     
-    # NEW: Enhanced weather conditions
     enhanced_wx_score, enhanced_wx_reasons = parse_enhanced_weather_conditions(metar_data)
     if enhanced_wx_score > 0:
         if enhanced_wx_score >= 100:
             contributors["volcanic_ash"] = {"score": enhanced_wx_score, "value": enhanced_wx_reasons, "unit": "conditions"}
-            score = 100  # Automatic EXTREME
+            score = 100
         else:
             contributors["enhanced_weather"] = {"score": enhanced_wx_score, "value": enhanced_wx_reasons, "unit": "conditions"}
             score += enhanced_wx_score
         
-    # Weather phenomena (can push score above 100)
     weather = metar_data.get("weather", [])
     ceiling = metar_data.get("ceiling")
     visibility = metar_data.get("visibility")
     
-    # Thunderstorm handling (automatic EXTREME)
     if any("TS" in weather_condition for weather_condition in weather):
         contributors["thunderstorm"] = {"score": 100, "value": True, "unit": "boolean"}
-        score = 100  # Active thunderstorm = automatic EXTREME
+        score = 100
         
-    # Lightning adds significant risk
     if any("LTG" in weather_condition for weather_condition in weather):
         contributors["lightning"] = {"score": 25, "value": True, "unit": "boolean"}
-        score += 25  # Lightning presence increases risk
+        score += 25
         
-    # Ceiling factors (if not already EXTREME)
     if score < 100 and ceiling is not None:
         ceiling_score = 0
         if ceiling < 500:
@@ -831,7 +755,6 @@ def calculate_rri(head, cross, gust_head, gust_cross, wind_speed, wind_gust, is_
             contributors["low_ceiling"] = {"score": ceiling_score, "value": ceiling, "unit": "ft AGL"}
             score += ceiling_score
             
-    # Visibility factors (if not already EXTREME)
     if score < 100 and visibility is not None:
         visibility_score = 0
         if visibility < 1:
@@ -846,22 +769,20 @@ def calculate_rri(head, cross, gust_head, gust_cross, wind_speed, wind_gust, is_
             contributors["low_visibility"] = {"score": visibility_score, "value": visibility, "unit": "SM"}
             score += visibility_score
             
-    # Other significant weather (if not already EXTREME)
     if score < 100:
-        if any("GR" in weather_condition for weather_condition in weather):  # Hail
+        if any("GR" in weather_condition for weather_condition in weather):
             contributors["hail"] = {"score": 40, "value": True, "unit": "boolean"}
             score += 40
-        if any("FC" in weather_condition for weather_condition in weather):  # Funnel cloud
+        if any("FC" in weather_condition for weather_condition in weather):
             contributors["funnel_cloud"] = {"score": 100, "value": True, "unit": "boolean"}
-            score = 100  # Automatic EXTREME
-        if any("FZ" in weather_condition for weather_condition in weather):  # Freezing precip
+            score = 100
+        if any("FZ" in weather_condition for weather_condition in weather):
             contributors["freezing_precipitation"] = {"score": 30, "value": True, "unit": "boolean"}
             score += 30
-        if any("+" in weather_condition for weather_condition in weather):   # Heavy precip
+        if any("+" in weather_condition for weather_condition in weather):
             contributors["heavy_precipitation"] = {"score": 20, "value": True, "unit": "boolean"}
             score += 20
         
-    # NEW: NOTAM risks (max 25 points)
     notam_score, notam_reasons = parse_notam_risks(notam_data, rwy_heading)
     if notam_score > 0:
         contributors["notam_risks"] = {"score": notam_score, "value": notam_reasons, "unit": "conditions"}
@@ -880,9 +801,9 @@ def get_rri_category(rri):
         return "EXTREME"
 
 def get_status_from_rri(rri):
-    if rri >= 76:  # EXTREME risk
+    if rri >= 76:
         return "NO-GO"
-    elif rri > 50:  # HIGH risk
+    elif rri > 50:
         return "CAUTION"
     else:
         return "GOOD" 

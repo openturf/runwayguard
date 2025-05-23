@@ -54,12 +54,28 @@ async def fetch_airport_info(icao):
                         parts = line.split(":",1)[-1].strip().split()
                         rwy_id = parts[0] if parts else None
                         align = None
+                        length = None
+                        
+                        # Parse runway alignment
                         for i, p in enumerate(parts):
                             if p == "Align:" and i+1 < len(parts):
                                 try: align = int(parts[i+1])
                                 except: pass
+                        
+                        # Parse runway dimensions (format: "Dimension: 7002x150")
+                        for i, p in enumerate(parts):
+                            if p == "Dimension:" and i+1 < len(parts):
+                                try: 
+                                    dimension = parts[i+1]
+                                    if 'x' in dimension:
+                                        length = int(dimension.split('x')[0])
+                                except: pass
+                        
                         if rwy_id and align:
-                            runways.append({"id": rwy_id, "heading": align})
+                            runway_info = {"id": rwy_id, "heading": align}
+                            if length:
+                                runway_info["length"] = length
+                            runways.append(runway_info)
                     except: pass
             return {"elevation": elev, "mag_dec": mag_dec, "runways": runways}
         else:

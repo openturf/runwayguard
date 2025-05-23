@@ -1,3 +1,18 @@
+"""
+Probabilistic Risk Analysis
+
+This handles uncertainty in runway risk calculations using Monte Carlo simulation.
+Weather conditions aren't perfectly predictable, so this runs hundreds of slightly
+different scenarios to give you confidence intervals.
+
+The main function takes your current conditions and wiggles the wind direction,
+speed, and gusts within realistic ranges. Then it calculates RRI for each scenario
+and gives you the 5th and 95th percentile results.
+
+This helps answer: "What's the worst-case scenario if conditions shift slightly?"
+versus "What's the best case if things improve a bit?"
+"""
+
 import random
 import math
 from .core_calculations import calculate_rri, wind_components, gust_components
@@ -56,12 +71,9 @@ def calculate_probabilistic_rri_monte_carlo(
 
     rri_samples.sort()
     
-    # Calculate 5th and 95th percentile indices for 0-indexed list
-    # For N items, P-th percentile is at index floor((N-1)*P)
     p05_index = math.floor((num_draws - 1) * 0.05)
     p95_index = math.floor((num_draws - 1) * 0.95)
     
-    # Ensure indices are within bounds
     p05_index = max(0, min(num_draws - 1, p05_index))
     p95_index = max(0, min(num_draws - 1, p95_index))
 

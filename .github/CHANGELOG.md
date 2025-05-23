@@ -6,7 +6,96 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.0] – 2025-01-28
+## [1.0.2] – 2025-05-22
+
+### 🎨 Major Documentation Enhancement: Professional README Transformation
+
+**Transformation Overview**: Complete visual redesign of README.md to create an eye-catching, professional aviation platform showcase that properly represents the sophisticated ARRI system capabilities.
+
+### Enhanced
+- **🌟 Visual Impact Redesign**
+  * Extensive emoji usage throughout for visual appeal and modern aesthetic
+  * Professional badge system showing version, status, and technology stack
+  * Beautiful table formatting for risk levels, data sources, and specifications
+  * Clear visual hierarchy with sectioned content and callout boxes
+
+- **💡 Professional Platform Positioning**
+  * Repositioned from "weather tool" to "professional-grade aviation safety platform"
+  * Emphasized use by flight schools, professional pilots, and aviation safety professionals
+  * Highlighted educational value and training applications
+  * Clear value proposition for different user types (students, professionals, schools, developers)
+
+- **🔬 Advanced Feature Showcase**
+  * Detailed breakdown of 5 Advanced Analysis Modules working in parallel
+  * Comprehensive coverage of 15+ risk factors analyzed simultaneously
+  * Aircraft-specific configuration system (C172 → Citation Jets)
+  * Pilot experience levels with adaptive threshold explanations
+  * Multi-domain risk amplification and correlation engine details
+
+- **📊 User Experience Enhancement**
+  * "30 seconds to get started" quick-start approach
+  * Real-world examples with actual JSON response formatting
+  * Comprehensive data integration table with update frequencies
+  * API features showcase with smart error handling examples
+  * Technical specifications with performance metrics
+
+- **🎓 Educational & Community Focus**
+  * Flight training applications prominently featured
+  * Educational resources section with documentation links
+  * Community contribution guide with development setup
+  * Areas where help is needed for community engagement
+  * Professional acknowledgments to aviation community
+
+### Impact
+- **Professional Credibility**: Now properly represents the sophisticated ARRI system
+- **User Engagement**: Eye-catching design increases appeal and usability
+- **Feature Discovery**: Advanced capabilities are clearly highlighted and explained
+- **Community Growth**: Clear contribution paths and educational value attract users
+- **Technical Clarity**: Comprehensive documentation for developers and integrators
+
+### Content Structure
+- **Clear Audience Targeting**: Students, professionals, schools, developers
+- **Comprehensive Feature Coverage**: All ARRI capabilities prominently displayed
+- **Safety & Legal Compliance**: Proper disclaimers and licensing information
+- **Technical Credibility**: Performance metrics, architecture details, security features
+
+This transformation elevates RunwayGuard's presentation to match its professional-grade technical capabilities and positions it as the leading aviation risk assessment platform.
+
+---
+
+## [1.0.1] – 2025-05-22
+
+### 🐛 Critical Bug Fix: Runway Length Data Extraction
+
+**Issue Resolved**: FAA API runway data parsing was only extracting runway headings but completely missing runway length information, causing the Advanced RRI system to fall back to estimates instead of using actual runway dimensions.
+
+### Fixed
+- **Enhanced Airport Info Parser** (`functions/getairportinfo.py`)
+  * Added runway length extraction from FAA API "Dimension:" field
+  * Parser now correctly handles format: `Runway: 18/36 Dimension: 7002x150 Surface: C Align: 182`
+  * Extracts both runway heading (182°) and length (7002 feet) from single API response
+  * Maintains backward compatibility for airports without dimension data
+
+### Impact
+- **Runway Performance Analysis** now uses real runway lengths instead of estimates
+- **Risk Assessment Accuracy** significantly improved for airports with published runway data
+- **Specific Performance Warnings** now possible (e.g., "concerning: 2053ft effective length")
+- **Multi-runway Airports** properly analyzed with individual runway specifications
+
+### Validation Results
+- **KACT Airport**: Successfully parsing both runways
+  * 01/19: 7107 feet → "adequate but tight: 2859ft effective length"
+  * 14/32: 5103 feet → "concerning: 2053ft effective length"
+- **KTKI Airport**: 18/36: 7002 feet → proper performance analysis
+
+### Technical Details
+- Enhanced text parsing logic to extract runway dimensions alongside alignment data
+- Improved data structure to include optional `length` field in runway objects
+- Maintained graceful fallback for airports without published runway dimension data
+
+---
+
+## [1.0.0] – 2025-05-21
 
 ### 🚀 Major Release: Advanced Runway Risk Intelligence (ARRI) System
 
@@ -113,7 +202,7 @@ This release represents a complete transformation of RunwayGuard from basic wind
 
 ---
 
-## [0.5.0] – 2025-01-27
+## [0.5.0] – 2025-05-21
 
 ### Added
 - **Enhanced RRI Algorithm** with comprehensive new risk factors
@@ -164,7 +253,7 @@ This release represents a complete transformation of RunwayGuard from basic wind
 
 ---
 
-## [0.4.2] – 2025-05-26
+## [0.4.2] – 2025-05-20
 
 ### Added
 - Example outputs section in README.md
@@ -174,7 +263,7 @@ This release represents a complete transformation of RunwayGuard from basic wind
 
 ---
 
-## [0.4.1] – 2025-05-26
+## [0.4.1] – 2025-05-20
 
 ### Added
 - Enhanced `/v1/info` endpoint with comprehensive API information
@@ -190,7 +279,7 @@ This release represents a complete transformation of RunwayGuard from basic wind
 
 ---
 
-## [0.4.0] – 2025-05-25
+## [0.4.0] – 2025-05-20
 
 ### Added
 - `CODE_OF_CONDUCT.md` establishing community guidelines and standards
