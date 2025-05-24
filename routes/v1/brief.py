@@ -23,7 +23,7 @@ import httpx
 import asyncio
 import logging
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, validator
 from fastapi import Request, status, HTTPException
 from fastapi.responses import JSONResponse
@@ -36,6 +36,7 @@ from functions.core_calculations import pressure_alt, density_alt, wind_componen
 from functions.probabilistic_rri import calculate_probabilistic_rri_monte_carlo
 from functions.weather_fetcher import fetch_metar, fetch_taf, fetch_notams, fetch_stationinfo, fetch_gairmet, fetch_sigmet, fetch_isigmet, fetch_pirep, fetch_cwa, fetch_windtemp, fetch_areafcst, fetch_fcstdisc, fetch_mis
 from functions.getairportinfo import fetch_airport_info
+from functions.route_analysis import analyze_route
 from dotenv import load_dotenv
 from functions.advanced_config import ConfigurationManager
 
@@ -65,6 +66,37 @@ class BriefRequest(BaseModel):
         v = v.upper()
         if not re.match(r'^[A-Z0-9]{3,4}$', v):
             raise ValueError('ICAO code must be 3-4 alphanumeric characters')
+        return v
+
+class RouteRequest(BaseModel):
+    airports: List[str]
+    aircraft_type: Optional[str] = "light"
+    pilot_experience: Optional[str] = "standard"
+    route_distances: Optional[List[float]] = None
+    
+    @validator('airports')
+    def validate_airports(cls, v):
+        if len(v) < 2:
+            raise ValueError('Route must include at least departure and destination airports')
+        if len(v) > 10:
+            raise ValueError('Route analysis limited to 10 airports maximum')
+        
+        validated_airports = []
+        for airport in v:
+            airport = airport.upper()
+            if not re.match(r'^[A-Z0-9]{3,4}$', airport):
+                raise ValueError(f'Invalid ICAO code: {airport}')
+            validated_airports.append(airport)
+        return validated_airports
+    
+    @validator('route_distances')
+    def validate_distances(cls, v, values):
+        if v is not None:
+            airports = values.get('airports', [])
+            if len(v) != len(airports) - 1:
+                raise ValueError('Route distances must have one less entry than airports')
+            if any(d <= 0 for d in v):
+                raise ValueError('All distances must be positive')
         return v
     
 
@@ -480,6 +512,55 @@ async def brief(request: Request, req: BriefRequest):
                 "icao": icao,
                 "error": str(e)
             }
+                    )
+
+@router.post("/route")
+@limiter.limit("10/minute")
+async def route_analysis(request: Request, req: RouteRequest):
+    """
+    Multi-Airport Route Analysis
+    
+    Provides comprehensive weather and risk assessment across multiple airports
+    for route planning, alternate selection, and strategic decision making.
+    """
+    route_airports = req.airports
+    logger.info(f"Processing route analysis for {len(route_airports)} airports: {' -> '.join(route_airports)}")
+    
+    try:
+        route_data = await analyze_route(
+            airports=route_airports,
+            aircraft_type=req.aircraft_type,
+            pilot_experience=req.pilot_experience,
+            route_distances=req.route_distances
+        )
+        
+        logger.info(f"Successfully processed route analysis for {' -> '.join(route_airports)}")
+        return JSONResponse({
+            "service": "RunwayGuard Multi-Airport Route Analysis",
+            "version": "2.0.0",
+            "analysis_type": "route",
+            "route_analysis": route_data
+        })
+        
+    except ValueError as e:
+        logger.warning(f"Invalid route request: {str(e)}")
+        raise APIError(
+            message=f"Invalid route configuration: {str(e)}",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            details={
+                "airports": route_airports,
+                "help": "For API usage guidance, visit /v1/brief/help"
+            }
+        )
+    except Exception as e:
+        logger.exception(f"Unexpected error processing route analysis for {' -> '.join(route_airports)}")
+        raise APIError(
+            message="Internal server error during route analysis",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            details={
+                "airports": route_airports,
+                "error": str(e)
+            }
         )
 
 @router.get("/brief/help")
@@ -491,26 +572,56 @@ async def brief_help(request: Request):
         "description": "Professional aviation risk assessment system with advanced weather analysis, performance modeling, and multi-factor risk correlation",
         
         "quick_start": {
-            "basic_request": {
+            "single_airport": {
                 "method": "POST",
                 "endpoint": "/v1/brief",
                 "example": {
                     "icao": "KGGG"
                 },
                 "description": "Get comprehensive runway risk analysis for any airport"
+            },
+            "route_analysis": {
+                "method": "POST",
+                "endpoint": "/v1/route",
+                "example": {
+                    "airports": ["KGGG", "KDFW", "KHOU"],
+                    "aircraft_type": "c172",
+                    "route_distances": [180, 240]
+                },
+                "description": "Multi-airport route analysis with weather trends and strategic planning"
             }
         },
         
         "request_parameters": {
-            "required": {
-                "icao": {
-                    "type": "string",
-                    "description": "4-letter ICAO airport code (e.g., KDFW, KGGG, KCNW)",
-                    "examples": ["KDFW", "KGGG", "KCNW", "KLAX", "KJFK"],
-                    "validation": "3-4 alphanumeric characters"
+            "single_airport": {
+                "required": {
+                    "icao": {
+                        "type": "string",
+                        "description": "4-letter ICAO airport code (e.g., KDFW, KGGG, KCNW)",
+                        "examples": ["KDFW", "KGGG", "KCNW", "KLAX", "KJFK"],
+                        "validation": "3-4 alphanumeric characters"
+                    }
                 }
             },
-            "optional": {
+            "route_analysis": {
+                "required": {
+                    "airports": {
+                        "type": "array",
+                        "description": "List of ICAO codes in route order [departure, waypoints..., destination]",
+                        "examples": [["KGGG", "KDFW"], ["KCNW", "KGGG", "KDFW", "KHOU"]],
+                        "validation": "2-10 valid ICAO codes"
+                    }
+                },
+                "optional": {
+                    "route_distances": {
+                        "type": "array",
+                        "description": "Distances between airports in nautical miles",
+                        "example": [180, 120, 240],
+                        "validation": "One less entry than airports, all positive numbers"
+                    }
+                }
+            },
+            "shared_optional": {
                 "aircraft_type": {
                     "type": "string", 
                     "default": "light",
@@ -556,28 +667,50 @@ async def brief_help(request: Request):
                 "description": "High-performance aircraft analysis",
                 "request": {"icao": "KCNW", "aircraft_type": "tbm", "pilot_experience": "commercial"},
                 "curl": "curl -X POST /v1/brief -H 'Content-Type: application/json' -d '{\"icao\": \"KCNW\", \"aircraft_type\": \"tbm\", \"pilot_experience\": \"commercial\"}'"
+            },
+            "simple_route": {
+                "description": "Basic two-airport route analysis",
+                "request": {"airports": ["KGGG", "KDFW"]},
+                "curl": "curl -X POST /v1/route -H 'Content-Type: application/json' -d '{\"airports\": [\"KGGG\", \"KDFW\"]}'"
+            },
+            "complex_route": {
+                "description": "Multi-stop route with distances and aircraft type",
+                "request": {"airports": ["KCNW", "KGGG", "KDFW", "KHOU"], "aircraft_type": "tbm", "route_distances": [180, 120, 240]},
+                "curl": "curl -X POST /v1/route -H 'Content-Type: application/json' -d '{\"airports\": [\"KCNW\", \"KGGG\", \"KDFW\", \"KHOU\"], \"aircraft_type\": \"tbm\", \"route_distances\": [180, 120, 240]}'"
             }
         },
         
         "response_features": {
-            "runway_risk_index": "0-100 point risk score with category (LOW/MODERATE/HIGH/EXTREME)",
-            "status": "GO/CAUTION/NO-GO operational recommendation", 
-            "advanced_analysis": {
-                "thermal_conditions": "Temperature gradient and convective risk analysis",
-                "atmospheric_stability": "Stability index and turbulence prediction",
-                "runway_performance": "Aircraft-specific performance assessment", 
-                "precipitation_analysis": "Enhanced weather impact evaluation",
-                "turbulence_analysis": "Wind shear and mechanical turbulence risk",
-                "risk_amplification": "Multi-factor risk correlation detection"
+            "single_airport": {
+                "runway_risk_index": "0-100 point risk score with category (LOW/MODERATE/HIGH/EXTREME)",
+                "status": "GO/CAUTION/NO-GO operational recommendation", 
+                "advanced_analysis": {
+                    "thermal_conditions": "Temperature gradient and convective risk analysis",
+                    "atmospheric_stability": "Stability index and turbulence prediction",
+                    "runway_performance": "Aircraft-specific performance assessment", 
+                    "precipitation_analysis": "Enhanced weather impact evaluation",
+                    "turbulence_analysis": "Wind shear and mechanical turbulence risk",
+                    "risk_amplification": "Multi-factor risk correlation detection"
+                },
+                "diagnostic_info": {
+                    "conditions_assessment": "Overall condition severity (mild/challenging)",
+                    "primary_risk_factors": "Top contributing risk factors with scores",
+                    "data_availability": "Status of available data sources",
+                    "recommendations": "Specific operational guidance and data verification needs"
+                },
+                "aircraft_configuration": "Applied risk profile and threshold adjustments",
+                "weather_data": "Current METAR, TAF, NOTAMs, PIREPs, SIGMETs, and more"
             },
-            "diagnostic_info": {
-                "conditions_assessment": "Overall condition severity (mild/challenging)",
-                "primary_risk_factors": "Top contributing risk factors with scores",
-                "data_availability": "Status of available data sources",
-                "recommendations": "Specific operational guidance and data verification needs"
-            },
-            "aircraft_configuration": "Applied risk profile and threshold adjustments",
-            "weather_data": "Current METAR, TAF, NOTAMs, PIREPs, SIGMETs, and more"
+            "route_analysis": {
+                "route_summary": "Overview of entire route with departure, destination, and stops",
+                "waypoints": "Detailed analysis for each airport including best runway selection",
+                "route_assessment": "Overall route status (GO/CAUTION/NO-GO) and risk distribution",
+                "weather_trends": "Pressure, temperature, and wind patterns across the route",
+                "hazards": "Identified weather hazards with affected airports and recommendations",
+                "alternates": "Recommended alternate airports for problematic destinations",
+                "fuel_considerations": "Fuel planning adjustments based on weather and performance",
+                "strategic_recommendations": "High-level planning guidance and go/no-go decisions"
+            }
         },
         
         "risk_assessment_capabilities": {
@@ -625,10 +758,32 @@ async def brief_help(request: Request):
             "Winds/temperature aloft forecasts"
         ],
         
+        "route_analysis_capabilities": {
+            "multi_airport_assessment": "Analyze up to 10 airports in a single route",
+            "weather_trend_analysis": "Track pressure, temperature, and wind patterns across route",
+            "hazard_identification": "Identify thunderstorms, icing, low visibility, and high winds",
+            "strategic_planning": "Route-wide go/no-go recommendations with rationale",
+            "fuel_planning": "Weather-adjusted fuel requirements and considerations",
+            "alternate_recommendations": "Suggest alternates for airports with poor conditions",
+            "performance_correlation": "Account for density altitude and aircraft performance across route"
+        },
+        
+        "use_cases": {
+            "cross_country_flights": "Analyze entire route for VFR or IFR cross-country planning",
+            "training_flights": "Student pilot route analysis with conservative risk assessment",
+            "commercial_operations": "Professional route planning with performance optimization",
+            "alternate_selection": "Compare multiple destination options for weather conditions",
+            "fuel_planning": "Weather-based fuel requirement calculations",
+            "dispatch_operations": "Fleet management and route optimization decisions"
+        },
+        
         "support": {
-            "documentation": "https://github.com/andrewwade/runwayguard",
+            "documentation": "https://github.com/awade12/runwayguard",
             "api_version": "v1",
-            "rate_limits": "20 requests per minute per IP",
+            "rate_limits": {
+                "single_airport": "20 requests per minute per IP",
+                "route_analysis": "10 requests per minute per IP"
+            },
             "contact": "See GitHub repository for issues and contributions"
         }
     })

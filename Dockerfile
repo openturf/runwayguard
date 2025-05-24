@@ -10,7 +10,7 @@ LABEL maintainer="andrew@openturf.org" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.created="${BUILD_DATE}" \
       org.opencontainers.image.revision="${VCS_REF}" \
-      org.opencontainers.image.source="https://github.com/andrewwade/runwayguard" \
+      org.opencontainers.image.source="https://github.com/awade12/runwayguard" \
       org.opencontainers.image.licenses="MIT"
 
 RUN apt-get update && apt-get install -y \

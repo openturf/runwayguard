@@ -6,6 +6,106 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.1.0] – 2025-05-24
+
+### 🚀 Major Feature: Multi-Airport Route Analysis System
+
+**Revolutionary Enhancement**: Complete implementation of comprehensive route-based risk assessment across multiple airports, transforming RunwayGuard from single-airport analysis to full route planning intelligence.
+
+### ✨ Added
+- **🛣️ Multi-Airport Route Analysis Engine** (`functions/route_analysis.py`)
+  * Comprehensive route analysis for 2-10 airports in sequence
+  * Strategic route planning with departure, en-route, and destination analysis
+  * Weather trend correlation across entire flight path
+  * Route-wide hazard identification and risk amplification detection
+  * Fuel planning adjustments based on cumulative weather conditions
+  * Alternate airport recommendations for problematic destinations
+
+- **🎯 Advanced Route Assessment Components**
+  * **RouteAnalyzer Class**: Core analysis engine with aircraft-specific configuration
+  * **RouteWaypoint System**: Detailed waypoint modeling with position tracking
+  * **RouteHazard Detection**: Systematic identification of thunderstorms, icing, low visibility, high winds
+  * **Strategic Recommendations**: AI-driven go/no-go decision support with rationale
+  * **Fuel Considerations**: Weather-adjusted fuel requirements (base factor 1.0x → 1.5x for severe conditions)
+
+- **🌐 New API Endpoint: `/v1/route`**
+  * POST endpoint for multi-airport route analysis
+  * Rate limited to 10 requests per minute for comprehensive processing
+  * Support for optional route distances in nautical miles
+  * Enhanced error handling with validation and guidance
+  * Professional JSON response structure with service identification
+
+- **📊 Comprehensive Route Intelligence Features**
+  * **Route Assessment**: Overall GO/CAUTION/NO-GO status determination
+  * **Weather Trends**: Pressure/temperature/wind pattern analysis across route
+  * **Best Runway Selection**: Optimal runway identification for each airport
+  * **Risk Distribution Analysis**: Average vs maximum RRI across waypoints
+  * **Critical Airport Identification**: Airports exceeding risk thresholds (RRI > 75)
+  * **Performance Correlation**: Density altitude effects across multiple airports
+
+### 🔧 Enhanced
+- **API Documentation System** (`/v1/brief/help`)
+  * Comprehensive route analysis parameter documentation
+  * Example requests with curl commands for both simple and complex routes
+  * Response feature breakdown for single-airport vs route analysis
+  * Route analysis capabilities showcase with 7 key features
+  * Use case documentation for cross-country, training, commercial, dispatch operations
+
+- **Request Validation and Error Handling**
+  * `RouteRequest` model with comprehensive validation
+  * Airport list validation (2-10 airports, valid ICAO codes)
+  * Route distance validation (n-1 distances for n airports)
+  * Enhanced error messages with specific guidance and help links
+
+- **Advanced Weather Integration**
+  * Parallel data fetching for multiple airports using asyncio
+  * Comprehensive weather data correlation (METAR, TAF, NOTAMs, station info)
+  * Hazard severity classification (moderate/high/extreme)
+  * Weather trend analysis with pressure/temperature gradient detection
+
+### 🛠️ Technical Architecture
+- **Modular Design Philosophy**
+  * Separation of concerns with dedicated analyzer classes
+  * Dataclass-based waypoint and hazard modeling
+  * Async/await architecture for optimal performance
+  * Integration with existing ARRI system and configuration management
+
+- **Professional Route Planning Capabilities**
+  * Strategic recommendation engine with emoji-enhanced guidance
+  * Fuel planning factor calculations based on hazard combinations
+  * High density altitude airport identification and performance warnings
+  * Risk amplification detection across multiple airports
+
+### 🎯 Real-World Validation
+- **KTKI → KGGG → KGKY Test Route**
+  * Successfully analyzed 300nm route with intermediate stop
+  * Correct CAUTION status due to KGKY high density altitude (RRI 75)
+  * Appropriate fuel factor calculation (1.1x) and alternate recommendations
+  * Strategic guidance: "Enhanced planning required for KGKY"
+  * Demonstrates professional-grade route planning intelligence
+
+### 🐛 Fixed
+- **Fuel Considerations Logic**
+  * Updated threshold from `> 1.1` to `>= 1.1` for consistent recommendations
+  * Ensures 10% fuel factor properly triggers additional fuel guidance
+
+### 📚 Documentation Enhancements
+- **Comprehensive Route Analysis Documentation**
+  * Complete parameter reference with validation rules
+  * Real-world example scenarios with JSON responses
+  * Use case descriptions for different pilot operations
+  * Rate limiting specification for route analysis endpoint
+
+### 🔄 Repository Updates
+- **GitHub Repository URL Correction**
+  * Updated from `andrewwade/runwayguard` to `awade12/runwayguard`
+  * Consistent repository references across Dockerfile and API documentation
+
+### Impact Assessment
+This release establishes RunwayGuard as a comprehensive **route planning intelligence platform**, expanding beyond single-airport analysis to provide strategic flight planning capabilities comparable to professional dispatch systems. The multi-airport analysis enables pilots to make informed decisions about entire routes, alternates, and fuel planning with sophisticated weather correlation and risk assessment.
+
+---
+
 ## [1.0.3] – 2025-05-22
 
 ### 📚 Major Documentation Enhancement: Advanced Algorithm Documentation Overhaul

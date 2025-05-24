@@ -15,6 +15,9 @@ Key components:
 - Risk amplification when multiple factors combine
 
 The risk score maps to: 0-25 LOW, 26-50 MODERATE, 51-75 HIGH, 76-100 EXTREME
+
+For multi-airport route analysis, see route_analysis.py which provides comprehensive
+route planning capabilities using these core calculations.
 - @awade12 may 20th 2025
 """
 
