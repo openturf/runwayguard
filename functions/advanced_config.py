@@ -1,8 +1,8 @@
 """
-Advanced Runway Risk Intelligence (ARRI) Configuration
+Runway Risk Intelligence Configuration
 
-This module provides configuration options for the advanced risk analysis system.
-It allows fine-tuning of risk thresholds, enabling/disabling advanced features,
+This module provides configuration options for the risk analysis system.
+It allows fine-tuning of risk thresholds, enabling/disabling features,
 and customizing the analysis for different aircraft categories and operational requirements.
 """
 
@@ -26,7 +26,7 @@ class RiskProfile(Enum):
 
 @dataclass
 class AdvancedRiskConfig:
-    """Configuration class for advanced risk analysis"""
+    """Configuration class for risk analysis"""
     
     # Feature toggles
     enable_thermal_analysis: bool = True
@@ -55,7 +55,7 @@ class AdvancedRiskConfig:
         }
         return multipliers[self.risk_profile]
     
-    # Advanced thresholds (can be adjusted based on operational requirements)
+    # Risk thresholds (can be adjusted based on operational requirements)
     thermal_gradient_thresholds: Dict[str, int] = None
     stability_index_thresholds: Dict[str, int] = None
     performance_risk_thresholds: Dict[str, int] = None
@@ -154,11 +154,11 @@ class ConfigurationManager:
         
         # Disable certain analyses if conditions don't warrant them
         if conditions.get("temp_c", 15) < 0 or conditions.get("temp_c", 15) > 35:
-            # Enhanced thermal analysis for extreme temperatures
+            # Better thermal analysis for extreme temperatures
             config.enable_thermal_analysis = True
         
         if conditions.get("wind_gust", 0) > conditions.get("wind_speed", 0) * 1.3:
-            # Enhanced turbulence analysis for gusty conditions
+            # Better turbulence analysis for gusty conditions
             config.enable_turbulence_analysis = True
         
         if any("TS" in w for w in conditions.get("weather", [])):

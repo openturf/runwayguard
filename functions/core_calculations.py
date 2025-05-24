@@ -11,7 +11,7 @@ Key components:
 - Wind analysis (headwind/tailwind/crosswind/gusts)
 - Density altitude effects on performance  
 - Weather hazards (thunderstorms, icing, low visibility)
-- Advanced atmospheric modeling for turbulence and thermal effects
+- Atmospheric modeling for turbulence and thermal effects
 - Risk amplification when multiple factors combine
 
 The risk score maps to: 0-25 LOW, 26-50 MODERATE, 51-75 HIGH, 76-100 EXTREME
@@ -24,7 +24,7 @@ from typing import Dict, List, Tuple, Optional, Any
 from .time_factors import calculate_time_risk_factor
 
 class AdvancedAtmosphericModel:
-    """Advanced atmospheric condition modeling for enhanced risk assessment"""
+    """Atmospheric condition modeling for better risk assessment"""
     
     @staticmethod
     def calculate_thermal_gradient_risk(temp_c: float, dewpoint_c: Optional[float], time_of_day: str) -> Tuple[int, List[str]]:
@@ -65,7 +65,7 @@ class AdvancedAtmosphericModel:
         return min(score, 30), reasons
 
 class PerformanceRiskAnalyzer:
-    """Advanced aircraft performance risk analysis"""
+    """Aircraft performance risk analysis"""
     
     @staticmethod
     def calculate_runway_performance_risk(runway_length: Optional[int], da_diff: int, 
@@ -128,7 +128,7 @@ class PerformanceRiskAnalyzer:
         return degradation_factor
 
 class WeatherRiskAnalyzer:
-    """Advanced weather condition risk analysis"""
+    """Weather condition risk analysis"""
     
     @staticmethod
     def calculate_precipitation_intensity_risk(weather: List[str]) -> Tuple[int, List[str]]:
@@ -211,7 +211,7 @@ class WeatherRiskAnalyzer:
         return min(score, 25), reasons
 
 class RiskCorrelationEngine:
-    """Advanced risk correlation and amplification analysis"""
+    """Risk correlation and amplification analysis"""
     
     @staticmethod
     def calculate_risk_amplification(contributors: Dict[str, Any]) -> Tuple[int, List[str]]:
@@ -449,9 +449,9 @@ def calculate_advanced_rri(head, cross, gust_head, gust_cross, wind_speed, wind_
                           runway_length=None, airport_elevation=None, terrain_factor=1.0, 
                           historical_trend=None, aircraft_category="light"):
     """
-    Advanced Runway Risk Index calculation with enhanced modeling
+    Comprehensive Runway Risk Index calculation with improved modeling
     
-    This is the new advanced version - the old calculate_rri function is maintained for backward compatibility
+    This is the full-featured version - the old calculate_rri function is maintained for backward compatibility
     """
     score = 0
     contributors = {}
@@ -657,7 +657,7 @@ def calculate_advanced_rri(head, cross, gust_head, gust_cross, wind_speed, wind_
 def calculate_rri(head, cross, gust_head, gust_cross, wind_speed, wind_gust, is_head, gust_is_head, da_diff, metar_data, lat=None, lon=None, rwy_heading=None, notam_data=None):
     """
     Original RRI calculation function - maintained for backward compatibility
-    For new implementations, use calculate_advanced_rri() for enhanced capabilities
+    For new implementations, use calculate_advanced_rri() for better capabilities
     """
     score = 0
     contributors = {}
