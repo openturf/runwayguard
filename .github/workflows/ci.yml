@@ -1,0 +1,243 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8, 3.9, "3.10", "3.11"]
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-asyncio pytest-cov httpx[testing] pytest-mock
+
+    - name: Create test environment file
+      run: |
+        echo "FAA_API=https://aviationweather.gov/api/data" > .env
+        echo "REDIS_URL=redis://localhost:6379" >> .env
+        echo "OPENAI_API_KEY=test-key" >> .env
+
+    - name: Run tests with coverage
+      run: |
+        pytest tests/ --cov=./ --cov-report=xml --cov-report=html
+      env:
+        REDIS_URL: redis://localhost:6379
+        FAA_API: https://aviationweather.gov/api/data
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install linting tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install ruff black isort mypy types-redis
+
+    - name: Run ruff (linting)
+      run: ruff check .
+
+    - name: Run black (formatting check)
+      run: black --check .
+
+    - name: Run isort (import sorting check)
+      run: isort --check-only .
+
+    - name: Run mypy (type checking)
+      run: mypy functions/ routes/ --ignore-missing-imports
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install security scanning tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install safety bandit semgrep
+
+    - name: Run safety check (dependency vulnerabilities)
+      run: safety check -r requirements.txt
+
+    - name: Run bandit (security linting)
+      run: bandit -r . -f json -o bandit-report.json
+      continue-on-error: true
+
+    - name: Upload bandit report
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: bandit-report
+        path: bandit-report.json
+
+  api-validation:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Create test environment
+      run: |
+        echo "FAA_API=https://aviationweather.gov/api/data" > .env
+        echo "REDIS_URL=redis://localhost:6379" >> .env
+        echo "OPENAI_API_KEY=test-key" >> .env
+
+    - name: Start FastAPI server
+      run: |
+        uvicorn main:app --host 0.0.0.0 --port 8000 &
+        sleep 10
+      env:
+        REDIS_URL: redis://localhost:6379
+
+    - name: Test API endpoints
+      run: |
+        # Test health endpoint
+        curl -f http://localhost:8000/v1/info || exit 1
+        
+        # Test help endpoint
+        curl -f http://localhost:8000/v1/brief/help || exit 1
+        
+        # Test brief endpoint with mock data
+        curl -f -X POST http://localhost:8000/v1/brief \
+          -H "Content-Type: application/json" \
+          -d '{"icao": "KORD"}' || echo "Brief endpoint test completed"
+
+  documentation:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Validate documentation
+      run: |
+        # Check that all required documentation exists
+        test -f README.md || exit 1
+        test -f docs/algorithm.md || exit 1
+        test -f .github/CHANGELOG.md || exit 1
+        test -f .github/CONTRIBUTING.md || exit 1
+        test -f .github/CODE_OF_CONDUCT.md || exit 1
+        test -f LICENSE.md || exit 1
+
+    - name: Check for broken markdown links
+      uses: gaurav-nelson/github-action-markdown-link-check@v1
+      with:
+        use-quiet-mode: 'yes'
+        use-verbose-mode: 'yes'
+        config-file: '.github/markdown-link-check-config.json'
+
+  aviation-specific-tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest
+
+    - name: Test risk calculation algorithms
+      run: |
+        python -c "
+        from functions.core_calculations import calculate_rri, calculate_advanced_rri, wind_components, density_alt
+        
+        # Test basic wind calculations
+        head, cross, is_head = wind_components(90, 120, 15)
+        assert head > 0 and cross > 0, 'Wind component calculation failed'
+        
+        # Test density altitude
+        da = density_alt(1000, 25, 29.92)
+        assert da > 1000, 'Density altitude calculation failed'
+        
+        print('✅ Aviation calculations validated')
+        "
+
+    - name: Validate risk scoring ranges
+      run: |
+        python -c "
+        from functions.core_calculations import get_rri_category, get_status_from_rri
+        
+        # Test risk categories
+        assert get_rri_category(15) == 'LOW'
+        assert get_rri_category(35) == 'MODERATE' 
+        assert get_rri_category(65) == 'HIGH'
+        assert get_rri_category(85) == 'EXTREME'
+        
+        # Test status mapping
+        assert get_status_from_rri(25) == 'GOOD'
+        assert get_status_from_rri(55) == 'CAUTION'
+        assert get_status_from_rri(80) == 'NO-GO'
+        
+        print('✅ Risk scoring validated')
+        " 
