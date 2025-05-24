@@ -1,4 +1,4 @@
-FROM python:3.11-slim as builder
+FROM python:3.13-slim as builder
 
 ARG BUILD_DATE
 ARG VCS_REF
@@ -26,7 +26,7 @@ COPY requirements.txt .
 RUN pip install --upgrade pip wheel && \
     pip install --no-cache-dir -r requirements.txt
 
-FROM python:3.11-slim as production
+FROM python:3.13-slim as production
 
 RUN apt-get update && apt-get install -y \
     curl \
