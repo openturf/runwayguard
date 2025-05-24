@@ -7,3 +7,6 @@ slowapi
 openai
 redis
 numpy
+asyncpg
+sqlalchemy
+sqlalchemy[asyncio]

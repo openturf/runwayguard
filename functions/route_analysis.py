@@ -150,6 +150,9 @@ class RouteAnalyzer:
             
             waypoints.append(waypoint)
         
+        if not waypoints:
+            raise ValueError("Failed to fetch data for any airports in the route")
+        
         return waypoints
     
     async def _fetch_single_waypoint_data(self, icao: str) -> Dict[str, Any]:
@@ -218,6 +221,9 @@ class RouteAnalyzer:
                 "status": get_status_from_rri(rri)
             })
         
+        if not runway_analyses:
+            return {"error": "No valid runway data available for analysis"}
+        
         best_runway = min(runway_analyses, key=lambda x: x["rri"])
         
         return {
@@ -229,19 +235,53 @@ class RouteAnalyzer:
     
     def _assess_overall_route(self, waypoints: List[RouteWaypoint]) -> Dict[str, Any]:
         """Assess overall route conditions and risks"""
+        if not waypoints:
+            return {
+                "overall_status": "NO-GO",
+                "overall_category": "EXTREME",
+                "average_rri": 0,
+                "maximum_rri": 0,
+                "critical_airports": [],
+                "total_airports_analyzed": 0,
+                "error": "No waypoint data available"
+            }
+        
         total_score = 0
         max_score = 0
         critical_airports = []
+        valid_airports = 0
         
         for wp in waypoints:
-            rri = wp.best_runway_analysis.get("best_runway", {}).get("rri", 0)
+            runway_analysis = wp.best_runway_analysis
+            if "error" in runway_analysis:
+                logger.warning(f"Skipping {wp.icao} due to runway analysis error: {runway_analysis['error']}")
+                continue
+                
+            best_runway = runway_analysis.get("best_runway", {})
+            if not best_runway:
+                logger.warning(f"No best runway data for {wp.icao}")
+                continue
+                
+            rri = best_runway.get("rri", 0)
             total_score += rri
             max_score = max(max_score, rri)
+            valid_airports += 1
             
             if rri > 75:
                 critical_airports.append(wp.icao)
         
-        avg_score = total_score / len(waypoints) if waypoints else 0
+        if valid_airports == 0:
+            return {
+                "overall_status": "NO-GO",
+                "overall_category": "EXTREME",
+                "average_rri": 0,
+                "maximum_rri": 0,
+                "critical_airports": [],
+                "total_airports_analyzed": 0,
+                "error": "No valid runway analysis data available"
+            }
+        
+        avg_score = total_score / valid_airports
         
         if max_score > 75 or len(critical_airports) > 0:
             overall_status = "NO-GO"
@@ -262,11 +302,22 @@ class RouteAnalyzer:
             "average_rri": round(avg_score, 1),
             "maximum_rri": max_score,
             "critical_airports": critical_airports,
-            "total_airports_analyzed": len(waypoints)
+            "total_airports_analyzed": valid_airports
         }
     
     def _analyze_weather_trends(self, waypoints: List[RouteWaypoint]) -> Dict[str, Any]:
         """Analyze weather trends across the route"""
+        if not waypoints:
+            return {
+                "pressure_trend": "unknown",
+                "pressure_range": "N/A",
+                "temperature_trend": "unknown", 
+                "temperature_range": "N/A",
+                "wind_range": "N/A",
+                "common_weather": [],
+                "error": "No waypoint data available"
+            }
+        
         pressures = []
         temperatures = []
         winds = []
@@ -274,10 +325,22 @@ class RouteAnalyzer:
         
         for wp in waypoints:
             metar = wp.metar
-            pressures.append(metar.get("altim_in_hg", 29.92))
-            temperatures.append(metar.get("temp_c", 15))
-            winds.append(metar.get("wind_speed", 0))
-            weather_conditions.update(metar.get("weather", []))
+            if metar:
+                pressures.append(metar.get("altim_in_hg", 29.92))
+                temperatures.append(metar.get("temp_c", 15))
+                winds.append(metar.get("wind_speed", 0))
+                weather_conditions.update(metar.get("weather", []))
+        
+        if not pressures:
+            return {
+                "pressure_trend": "unknown",
+                "pressure_range": "N/A",
+                "temperature_trend": "unknown",
+                "temperature_range": "N/A", 
+                "wind_range": "N/A",
+                "common_weather": [],
+                "error": "No valid weather data available"
+            }
         
         pressure_trend = "stable"
         if len(pressures) > 1:
@@ -306,6 +369,9 @@ class RouteAnalyzer:
     
     def _identify_route_hazards(self, waypoints: List[RouteWaypoint]) -> List[RouteHazard]:
         """Identify weather hazards affecting the route"""
+        if not waypoints:
+            return []
+        
         hazards = []
         
         thunderstorm_airports = []
@@ -314,16 +380,20 @@ class RouteAnalyzer:
         high_wind_airports = []
         
         for wp in waypoints:
-            weather = wp.metar.get("weather", [])
-            wind_speed = wp.metar.get("wind_speed", 0)
-            wind_gust = wp.metar.get("wind_gust", 0)
-            visibility = wp.metar.get("visibility")
-            temp_c = wp.metar.get("temp_c", 15)
+            metar = wp.metar
+            if not metar:
+                continue
+                
+            weather = metar.get("weather", [])
+            wind_speed = metar.get("wind_speed", 0)
+            wind_gust = metar.get("wind_gust", 0)
+            visibility = metar.get("visibility")
+            temp_c = metar.get("temp_c", 15)
             
             if any("TS" in w for w in weather):
                 thunderstorm_airports.append(wp.icao)
             
-            if -10 <= temp_c <= 2 and wp.metar.get("cloud_layers"):
+            if -10 <= temp_c <= 2 and metar.get("cloud_layers"):
                 icing_airports.append(wp.icao)
             
             if visibility is not None and visibility < 3:

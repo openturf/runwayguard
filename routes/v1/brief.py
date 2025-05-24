@@ -39,6 +39,7 @@ from functions.getairportinfo import fetch_airport_info
 from functions.route_analysis import analyze_route
 from dotenv import load_dotenv
 from functions.advanced_config import ConfigurationManager
+from functions.database import get_database
 
 load_dotenv()
 
@@ -48,6 +49,11 @@ router = APIRouter()
 
 limiter = Limiter(key_func=get_remote_address)
 
+def get_client_ip(request: Request) -> str:
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
 
 class APIError(Exception):
     def __init__(self, message: str, status_code: int = 500, details: Optional[Dict[str, Any]] = None):
@@ -155,7 +161,21 @@ async def brief(request: Request, req: BriefRequest):
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 details={"icao": icao, "error": str(e)}
             )
-            
+        
+        # Initialize supplementary data with defaults
+        taf = {"raw": "", "start_time": None, "end_time": None}
+        stationinfo = {"latitude": None, "longitude": None}
+        notams = {"closed_runways": [], "raw_text": ""}
+        gairmet = []
+        sigmet = []
+        isigmet = []
+        pirep = []
+        cwa = []
+        windtemp = {"raw": ""}
+        areafcst = {"raw": ""}
+        fcstdisc = {"raw": ""}
+        mis = {"raw": ""}
+        
         try:
             taf = await fetch_taf(icao)
             stationinfo = await fetch_stationinfo(icao)
@@ -475,8 +495,8 @@ async def brief(request: Request, req: BriefRequest):
             )
             
         processing_time = round(time.time() - start_time, 3)
-        logger.info(f"Successfully processed brief for {icao} in {processing_time}s")
-        return JSONResponse({
+        
+        response_data = {
             "icao": icao,
             "processing_time_seconds": processing_time,
             "aircraft_config": {
@@ -502,11 +522,59 @@ async def brief(request: Request, req: BriefRequest):
             "fcstdisc": fcstdisc,
             "mis": mis,
             "runway_briefs": runway_results
-        })
+        }
+        
+        try:
+            db = await get_database()
+            if db.engine:
+                await db.store_api_response(
+                    endpoint="brief",
+                    request_data=req.dict(),
+                    response_data=response_data,
+                    processing_time=processing_time,
+                    client_ip=get_client_ip(request)
+                )
+            else:
+                logger.info("Database not configured - skipping response storage")
+        except Exception as e:
+            logger.error(f"Failed to store response to database: {str(e)}")
+        
+        logger.info(f"Successfully processed brief for {icao} in {processing_time}s")
+        return JSONResponse(response_data)
             
-    except APIError:
+    except APIError as api_error:
+        try:
+            db = await get_database()
+            if db.engine:
+                await db.store_api_response(
+                    endpoint="brief",
+                    request_data=req.dict(),
+                    response_data={},
+                    processing_time=round(time.time() - start_time, 3),
+                    client_ip=get_client_ip(request),
+                    error_message=api_error.message
+                )
+        except Exception as e:
+            logger.error(f"Failed to store error to database: {str(e)}")
         raise
     except Exception as e:
+        processing_time = round(time.time() - start_time, 3)
+        error_message = f"Internal server error: {str(e)}"
+        
+        try:
+            db = await get_database()
+            if db.engine:
+                await db.store_api_response(
+                    endpoint="brief",
+                    request_data=req.dict(),
+                    response_data={},
+                    processing_time=processing_time,
+                    client_ip=get_client_ip(request),
+                    error_message=error_message
+                )
+        except Exception as db_error:
+            logger.error(f"Failed to store error to database: {str(db_error)}")
+        
         logger.exception(f"Unexpected error processing brief for {icao}")
         raise APIError(
             message="Internal server error",
@@ -515,7 +583,7 @@ async def brief(request: Request, req: BriefRequest):
                 "icao": icao,
                 "error": str(e)
             }
-                    )
+        )
 
 @router.post("/route")
 @limiter.limit("10/minute")
@@ -537,18 +605,49 @@ async def route_analysis(request: Request, req: RouteRequest):
             route_distances=req.route_distances
         )
         
-        logger.info(f"Successfully processed route analysis for {' -> '.join(route_airports)}")
-        return JSONResponse({
+        response_data = {
             "service": "RunwayGuard Multi-Airport Route Analysis",
             "version": "2.0.0",
             "analysis_type": "route",
             "route_analysis": route_data
-        })
+        }
+        
+        try:
+            db = await get_database()
+            if db.engine:  # Only store if database is properly configured
+                await db.store_api_response(
+                    endpoint="route",
+                    request_data=req.dict(),
+                    response_data=response_data,
+                    client_ip=get_client_ip(request)
+                )
+            else:
+                logger.info("Database not configured - skipping route response storage")
+        except Exception as e:
+            logger.error(f"Failed to store route response to database: {str(e)}")
+        
+        logger.info(f"Successfully processed route analysis for {' -> '.join(route_airports)}")
+        return JSONResponse(response_data)
         
     except ValueError as e:
+        error_message = f"Invalid route configuration: {str(e)}"
+        
+        try:
+            db = await get_database()
+            if db.engine:
+                await db.store_api_response(
+                    endpoint="route",
+                    request_data=req.dict(),
+                    response_data={},
+                    client_ip=get_client_ip(request),
+                    error_message=error_message
+                )
+        except Exception as db_error:
+            logger.error(f"Failed to store route error to database: {str(db_error)}")
+        
         logger.warning(f"Invalid route request: {str(e)}")
         raise APIError(
-            message=f"Invalid route configuration: {str(e)}",
+            message=error_message,
             status_code=status.HTTP_400_BAD_REQUEST,
             details={
                 "airports": route_airports,
@@ -556,6 +655,21 @@ async def route_analysis(request: Request, req: RouteRequest):
             }
         )
     except Exception as e:
+        error_message = f"Internal server error during route analysis: {str(e)}"
+        
+        try:
+            db = await get_database()
+            if db.engine:
+                await db.store_api_response(
+                    endpoint="route",
+                    request_data=req.dict(),
+                    response_data={},
+                    client_ip=get_client_ip(request),
+                    error_message=error_message
+                )
+        except Exception as db_error:
+            logger.error(f"Failed to store route error to database: {str(db_error)}")
+        
         logger.exception(f"Unexpected error processing route analysis for {' -> '.join(route_airports)}")
         raise APIError(
             message="Internal server error during route analysis",
@@ -790,3 +904,83 @@ async def brief_help(request: Request):
             "contact": "See GitHub repository for issues and contributions"
         }
     })
+
+@router.get("/analytics/recent")
+@limiter.limit("30/minute")
+async def get_recent_responses(
+    request: Request,
+    endpoint: Optional[str] = None,
+    icao: Optional[str] = None,
+    limit: int = 50
+):
+    """Get recent API responses from the database"""
+    try:
+        db = await get_database()
+        if not db.engine:
+            raise APIError(
+                message="Database not configured",
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                details={
+                    "error": "Database functionality requires DATABASE_URL to be configured",
+                    "help": "Set DATABASE_URL environment variable with postgresql+asyncpg:// connection string"
+                }
+            )
+            
+        responses = await db.get_recent_responses(
+            endpoint=endpoint,
+            icao_code=icao,
+            limit=min(limit, 100)
+        )
+        
+        return JSONResponse({
+            "recent_responses": responses,
+            "filters_applied": {
+                "endpoint": endpoint,
+                "icao_filter": icao,
+                "limit": limit
+            },
+            "total_returned": len(responses)
+        })
+        
+    except APIError:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to retrieve recent responses: {str(e)}")
+        raise APIError(
+            message="Failed to retrieve analytics data",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            details={"error": str(e)}
+        )
+
+@router.get("/analytics/stats")
+@limiter.limit("30/minute")
+async def get_usage_stats(request: Request, days: int = 30):
+    """Get usage statistics from the database"""
+    try:
+        db = await get_database()
+        if not db.engine:
+            raise APIError(
+                message="Database not configured",
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                details={
+                    "error": "Database functionality requires DATABASE_URL to be configured",
+                    "help": "Set DATABASE_URL environment variable with postgresql+asyncpg:// connection string"
+                }
+            )
+            
+        stats = await db.get_usage_stats(days=min(days, 365))
+        
+        return JSONResponse({
+            "usage_statistics": stats,
+            "period_days": days
+        })
+        
+    except APIError:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to retrieve usage stats: {str(e)}")
+        raise APIError(
+            message="Failed to retrieve usage statistics",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            details={"error": str(e)}
+        )

@@ -6,6 +6,84 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.2.0] – 2025-05-24
+
+### 🗄️ Major Feature: Database Integration & Analytics
+
+**Finally!** After months of "we should probably store this stuff", RunwayGuard now actually remembers what happened. No more wondering "did that API call work?" or "how many people are using KDFW?" - we've got receipts now.
+
+### ✨ Added
+- **🏗️ PostgreSQL Database Backend** (`functions/database.py`)
+  * Full async SQLAlchemy setup because we're fancy like that
+  * Stores every API request/response like a digital hoarder
+  * Processing times, client IPs, error messages - the works
+  * Even handles DATABASE_URL conversion because PostgreSQL drivers are picky
+
+- **📊 New Analytics Endpoints**
+  * `/v1/brief/analytics/recent` - See what everyone's been asking about
+  * `/v1/brief/analytics/stats` - Usage stats that actually mean something
+  * Rate limited because we're not savages
+  * Pretty JSON responses with actual useful data
+
+- **🎯 Smart Error Recovery**
+  * Route analysis won't explode if one airport has bad data
+  * Graceful fallbacks when weather services have a bad day
+  * Better error messages that don't make you want to throw your laptop
+
+### 🔧 Enhanced
+- **Database Storage for Everything**
+  * Brief requests with timing data (because performance matters)
+  * Route analysis results (multi-airport madness included) 
+  * Error tracking so we know when things go sideways
+  * Client IP logging for the "who's hitting our API" question
+
+- **Bulletproof Route Analysis**
+  * No more crashes when airports return empty data
+  * Proper null checking everywhere (finally learned our lesson)
+  * Meaningful error messages instead of cryptic stack traces
+  * Routes work even if one airport is having an identity crisis
+
+- **Startup/Shutdown Lifecycle**
+  * Database initializes on startup (or politely warns if not configured)
+  * Clean shutdown handling so PostgreSQL doesn't get grumpy
+  * Proper connection pooling because we're professionals now
+
+### 🛠️ Technical Stuff
+- **Dependencies Added**
+  * `asyncpg` for async PostgreSQL (because sync is so 2015)
+  * `sqlalchemy[asyncio]` for the ORM magic
+  * Connection pooling, pre-ping, recycling - all the good stuff
+
+- **Data Models That Make Sense**
+  * `APIResponse` table with indexed fields where they matter
+  * JSON storage for request/response data (PostgreSQL FTW)
+  * Proper timestamps and error message handling
+
+### 🎯 Real-World Impact
+- **Analytics That Actually Help**
+  * See which airports get hit most (spoiler: it's probably KDFW)
+  * Track processing times to spot performance issues
+  * Error rates by endpoint so we know what's breaking
+
+- **Better Debugging**
+  * Every API call logged with context
+  * Error tracking that tells us what actually went wrong
+  * Performance monitoring built-in
+
+### 🐛 Fixed (Sort Of)
+- Route analysis no longer falls over when airports return empty runway data
+- Error handling that doesn't make you question your life choices
+- Null checks everywhere because JavaScript developers were right about one thing
+
+### ⚠️ Migration Notes
+- Set `DATABASE_URL` if you want the shiny new features
+- API works fine without database (we're not that cruel)
+- Existing deployments won't break (backward compatibility is love)
+
+This release basically turns RunwayGuard from "hope it works" to "we know it works because we have the data to prove it." Your future self debugging production issues will thank you.
+
+---
+
 ## [1.1.1] – 2025-05-24
 
 ### 🔧 Enhanced
