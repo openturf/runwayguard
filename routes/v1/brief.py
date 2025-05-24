@@ -103,6 +103,7 @@ class RouteRequest(BaseModel):
 @router.post("/brief")
 @limiter.limit("20/minute")
 async def brief(request: Request, req: BriefRequest):
+    start_time = time.time()
     icao = req.icao.upper()
     logger.info(f"Processing brief request for ICAO: {icao}, Aircraft: {req.aircraft_type}, Experience: {req.pilot_experience}")
     
@@ -473,9 +474,11 @@ async def brief(request: Request, req: BriefRequest):
                 details={"icao": icao}
             )
             
-        logger.info(f"Successfully processed brief for {icao}")
+        processing_time = round(time.time() - start_time, 3)
+        logger.info(f"Successfully processed brief for {icao} in {processing_time}s")
         return JSONResponse({
             "icao": icao,
+            "processing_time_seconds": processing_time,
             "aircraft_config": {
                 "type": req.aircraft_type,
                 "experience_level": req.pilot_experience,

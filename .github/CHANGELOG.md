@@ -6,6 +6,27 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.1.1] – 2025-05-24
+
+### 🔧 Enhanced
+- **Performance Monitoring for Brief Endpoint** (`routes/v1/brief.py`)
+  * Added request timing instrumentation to `/v1/brief` endpoint
+  * Response now includes `processing_time_seconds` field with millisecond precision
+  * Enhanced logging to include processing duration in success messages
+  * Enables API performance monitoring and optimization tracking
+  * Consistent with route analysis endpoint timing capabilities
+
+### Technical Details
+- **Timing Implementation**: Start timer at request initiation, calculate duration before response
+- **Response Enhancement**: Added `processing_time_seconds` field to JSON output (rounded to 3 decimal places)
+- **Logging Enhancement**: Success logs now include processing time (e.g., "Successfully processed brief for KDFW in 1.234s")
+- **Performance Insight**: Enables monitoring of single-airport analysis processing efficiency
+
+### Impact Assessment
+This enhancement provides valuable performance monitoring capabilities for the core brief endpoint, enabling operators to track API response times and identify potential optimization opportunities. The timing data helps with capacity planning and ensures consistent service level monitoring across all RunwayGuard endpoints.
+
+---
+
 ## [1.1.0] – 2025-05-24
 
 ### 🚀 Major Feature: Multi-Airport Route Analysis System
