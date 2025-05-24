@@ -15,6 +15,7 @@ Key components:
 - Risk amplification when multiple factors combine
 
 The risk score maps to: 0-25 LOW, 26-50 MODERATE, 51-75 HIGH, 76-100 EXTREME
+- @awade12 may 20th 2025
 """
 
 import math

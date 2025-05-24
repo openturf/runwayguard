@@ -12,6 +12,7 @@ when OpenAI is configured, and provides detailed diagnostic information for
 understanding why certain risk scores were assigned.
 
 Rate limited to 20 requests per minute to keep things reasonable.
+- @awade12 may 20th 2025
 """
 
 import os
