@@ -15,6 +15,7 @@ load_dotenv()
 # route initializations!
 from routes.v1.brief import router as brief_router, APIError
 from routes.v1.info import router as info_router
+from routes.v1.private.sms import router as sms_router
 from functions.database import initialize_database, db_manager
 
 logging.basicConfig(level=logging.INFO)
@@ -66,4 +67,5 @@ async def api_error_handler(request: Request, exc: APIError):
 
 app.include_router(brief_router, prefix="/v1")
 app.include_router(info_router, prefix="/v1")
+app.include_router(sms_router, prefix="/v1")
 ## uvicorn main:app --reload or uvicorn main:app --reload

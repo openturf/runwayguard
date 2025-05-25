@@ -181,3 +181,7 @@ cython_debug/
 .cursorindexingignore
 
 .cursor/
+
+routes/v1/private/sms.py
+docs/sms-setup.md
+docs/example/sms_example.py

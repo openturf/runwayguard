@@ -191,6 +191,47 @@ curl -X POST "/v1/brief" -d '{"icao": "KCNW", "aircraft_type": "tbm", "pilot_exp
 
 ---
 
+## 📱 **SMS Integration - Get Briefings via Text**
+
+### **🚀 Quick SMS Briefings**
+Send a text message to get instant runway risk assessments on your phone!
+
+```
+Text: KDFW C172 PRIVATE
+Reply: KDFW RWY18R: GO
+       RRI: 25/100 (LOW)
+       Wind: 180°@8kt
+       H/X: +8/+0kt
+       RunwayGuard.com
+```
+
+### **📲 Supported SMS Formats**
+- **Single Line**: `KDFW C172 PRIVATE`
+- **Multi-Line**: 
+  ```
+  KDFW
+  C172
+  PRIVATE
+  ```
+
+### **✈️ Aircraft Types via SMS**
+- `C172`, `CESSNA`, `PIPER` → Light aircraft
+- `TWIN`, `MULTI`, `BE58` → Twin engine
+- `KING`, `BEECH`, `TURBO` → Turboprop
+- `JET`, `CITATION`, `LEAR` → Jet aircraft
+
+### **👨‍✈️ Experience Levels via SMS**
+- `STUDENT` → Student pilot settings
+- `PRIVATE`, `PPL` → Private pilot
+- `INSTRUMENT`, `IFR` → Instrument rated
+- `COMMERCIAL`, `CPL` → Commercial pilot
+- `ATP`, `AIRLINE` → Airline transport pilot
+
+### **🔧 SMS Setup**
+See [SMS Setup Guide](docs/sms-setup.md) for complete configuration instructions.
+
+---
+
 ## 🔧 **API Features**
 
 ### **Smart Error Handling**

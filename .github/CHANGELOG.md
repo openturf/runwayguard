@@ -4,6 +4,89 @@ All notable changes to **RunwayGuard** will be documented in this file.
 
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.2.2] – 2025-05-25
+
+### 📱 Private Feature Addition: SMS Integration (Experimental)
+
+**Development Update**: Initial implementation of SMS-based runway briefing system using Vonage SMS API. This feature is currently in **private development** and not yet available for general use while we resolve carrier compatibility and anti-spam challenges.
+
+### ✨ Added (Private Development)
+- **🔧 SMS Webhook System** (`routes/v1/private/sms.py`)
+  * Vonage SMS API integration with modern SDK usage
+  * Webhook endpoint for receiving inbound SMS messages (`/v1/private/sms/inbound`)
+  * SMS status endpoint for service monitoring (`/v1/private/sms/status`)
+  * Rate limiting (60 requests/minute) for webhook protection
+  * Comprehensive error handling and logging
+
+- **📲 SMS Message Processing**
+  * Intelligent SMS parsing for aviation requests (ICAO, aircraft, experience)
+  * Multi-format support: single line (`KDFW C172 PRIVATE`) and multi-line formats
+  * Aircraft type detection (C172, TWIN, JET, etc.) with categorization
+  * Pilot experience level parsing (STUDENT, PRIVATE, COMMERCIAL, ATP)
+  * Help message system for invalid request formats
+
+- **🌐 Carrier-Friendly Response Formatting**
+  * Abbreviated runway briefing responses optimized for SMS character limits
+  * Anti-spam compliant formatting (no special characters, clear factual language)
+  * Risk assessment summaries: `Risk: 33/100 (MODERATE)`
+  * Wind information: `Wind: 140deg at 6kt`
+  * Runway recommendations with density altitude warnings
+
+- **📚 Comprehensive Documentation**
+  * SMS setup guide (`docs/sms-setup.md`) with Vonage configuration
+  * Anti-spam troubleshooting section with carrier error codes
+  * Example integration scripts (`docs/example/sms_example.py`)
+  * README integration with SMS feature showcase
+
+### 🔧 Enhanced
+- **Application Architecture**
+  * Added SMS router to main application (`main.py`)
+  * Vonage dependency integration (`requirements.txt`)
+  * Environment variable configuration for SMS credentials
+
+- **User Interface Documentation**
+  * README updated with SMS integration section
+  * Aircraft type and experience level mapping for SMS users
+  * Quick-start SMS examples and formatting guidelines
+
+### 🛠️ Technical Implementation
+- **Vonage SDK Integration**
+  * Modern Vonage Python SDK with proper `Auth` and `Vonage` client setup
+  * `SmsMessage` object usage with correct attribute handling
+  * Error code mapping and status monitoring (Status 0-9 support)
+
+- **Message Processing Pipeline**
+  * Async SMS processing with full runway briefing analysis
+  * Integration with existing ARRI system for comprehensive risk assessment
+  * Abbreviated response generation optimized for mobile consumption
+  * Airport data validation and weather integration
+
+### ⚠️ Current Limitations (Private Development)
+- **Carrier Compatibility Issues**
+  * Verizon Wireless blocking messages with Status 6 (Anti-Spam Rejection)
+  * Vonage demo account appending `[FREE SMS DEMO, TEST MESSAGE]` to responses
+  * Production deployment requires paid Vonage account upgrade
+
+- **Development Status**
+  * Feature marked as private until carrier blocking issues resolved
+  * SMS files added to `.gitignore` for development isolation
+  * Extensive testing required before public release
+
+### 🎯 Real-World Testing
+- **KTKI Airport Validation**
+  * Successful SMS parsing: `{'icao': 'KTKI', 'aircraft_type': 'light', 'pilot_experience': 'private'}`
+  * Proper runway analysis generation with abbreviated formatting
+  * Carrier delivery testing revealing anti-spam challenges
+
+### 📋 Next Steps
+- Upgrade Vonage account to remove demo restrictions
+- Implement additional carrier-friendly message formatting
+- Conduct extended testing with multiple carriers
+- Develop fallback systems for blocked messages
+
+### Impact Assessment
+This experimental SMS integration represents a significant step toward mobile-first aviation safety, enabling pilots to receive instant runway risk assessments via text message. While currently private due to carrier compatibility challenges, the foundation is established for future public deployment once anti-spam requirements are fully addressed.
+
 ---
 
 ## [1.2.1] – 2025-01-27

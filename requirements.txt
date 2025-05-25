@@ -10,3 +10,4 @@ numpy
 asyncpg
 sqlalchemy
 sqlalchemy[asyncio]
+vonage
