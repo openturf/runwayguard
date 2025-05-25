@@ -1,6 +1,8 @@
 # RunwayGuard – minimal FastAPI micro‑service that calculates real‑time runway wind components
 # and density altitude, optionally generating a plain‑English advisory via OpenAI.
+# Copyright by awade12(openturf.org)
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -18,18 +20,8 @@ from functions.database import initialize_database, db_manager
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="runwayguard", version="0.3.0")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-@app.on_event("startup")
-async def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     logger.info("Initializing database connection...")
     try:
         db_initialized = await initialize_database()
@@ -41,15 +33,25 @@ async def startup_event():
     except Exception as e:
         logger.error(f"Failed to initialize database: {str(e)}")
         logger.warning("API will continue without database functionality")
-
-@app.on_event("shutdown")
-async def shutdown_event():
+    
+    yield
+    
     logger.info("Closing database connection...")
     try:
         await db_manager.close()
         logger.info("Database connection closed successfully")
     except Exception as e:
         logger.error(f"Error closing database connection: {str(e)}")
+
+app = FastAPI(title="runwayguard", version="0.3.0", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.exception_handler(APIError)
 async def api_error_handler(request: Request, exc: APIError):

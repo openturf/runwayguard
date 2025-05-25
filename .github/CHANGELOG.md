@@ -6,6 +6,48 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.2.1] – 2025-01-27
+
+### 🔧 Technical Enhancement: FastAPI Lifespan Event Modernization
+
+**Modernization Update**: Replaced deprecated `@app.on_event` decorators with modern lifespan context manager to eliminate deprecation warnings and future-proof the application architecture.
+
+### ✨ Enhanced
+- **Modern Lifespan Event Handling** (`main.py`)
+  * Replaced deprecated `@app.on_event("startup")` and `@app.on_event("shutdown")` decorators
+  * Implemented `@asynccontextmanager` lifespan function for unified startup/shutdown logic
+  * Added `contextlib.asynccontextmanager` import for proper async context management
+  * Updated FastAPI initialization with `lifespan=lifespan` parameter
+
+### 🛠️ Technical Improvements
+- **Unified Lifecycle Management**
+  * Single `lifespan()` function handles both startup and shutdown events
+  * Code before `yield` executes during application startup
+  * Code after `yield` executes during application shutdown
+  * Better organization with related startup/shutdown logic in one place
+
+- **Future-Proof Architecture**
+  * Eliminates FastAPI deprecation warnings for `on_event` usage
+  * Follows current FastAPI best practices and recommendations
+  * Maintains exact same functionality with modern implementation
+  * Provides access to FastAPI app instance for potential state management
+
+### 🔄 Migration Details
+- **Backward Compatibility**: No API changes or functional differences
+- **Database Lifecycle**: Startup database initialization and shutdown cleanup unchanged
+- **Error Handling**: Identical exception handling and logging behavior
+- **Performance**: No performance impact, same async execution patterns
+
+### 📚 Code Quality Improvements
+- **Copyright Notice**: Added proper copyright attribution per project standards
+- **Modern Python Patterns**: Utilizes async context manager pattern
+- **Cleaner Architecture**: Startup and shutdown logic co-located for better maintainability
+
+### Impact Assessment
+This technical enhancement ensures RunwayGuard stays current with FastAPI evolution while maintaining all existing functionality. The modernization eliminates deprecation warnings and positions the codebase for future FastAPI updates without breaking changes.
+
+---
+
 ## [1.2.0] – 2025-05-24
 
 ### 🗄️ Major Feature: Database Integration & Analytics
