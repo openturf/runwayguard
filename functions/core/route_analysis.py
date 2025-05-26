@@ -23,10 +23,10 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass
 
-from .weather_fetcher import fetch_metar, fetch_taf, fetch_notams, fetch_stationinfo
-from .getairportinfo import fetch_airport_info
+from ..data_sources.weather_fetcher import fetch_metar, fetch_taf, fetch_notams, fetch_stationinfo
+from ..data_sources.getairportinfo import fetch_airport_info
 from .core_calculations import calculate_advanced_rri, wind_components, density_alt, get_rri_category, get_status_from_rri
-from .advanced_config import ConfigurationManager
+from ..config.advanced_config import ConfigurationManager
 
 logger = logging.getLogger(__name__)
 

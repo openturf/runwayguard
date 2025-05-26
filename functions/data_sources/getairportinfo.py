@@ -1,4 +1,4 @@
-from functions.caching import cached_fetch
+from functions.infrastructure.caching import cached_fetch
 import os
 from dotenv import load_dotenv
 

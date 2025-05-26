@@ -16,7 +16,7 @@ when APIs are down or return weird data.
 import os
 import logging
 from typing import Dict, Any, Optional
-from functions.caching import cached_fetch
+from functions.infrastructure.caching import cached_fetch
 
 logger = logging.getLogger(__name__)
 

@@ -16,7 +16,7 @@ load_dotenv()
 from routes.v1.brief import router as brief_router, APIError
 from routes.v1.info import router as info_router
 # from routes.v1.private.sms import router as sms_router -- soon
-from functions.database import initialize_database, db_manager
+from functions.infrastructure.database import initialize_database, db_manager
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

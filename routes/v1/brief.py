@@ -29,15 +29,15 @@ from fastapi.responses import JSONResponse
 from fastapi import APIRouter
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-from functions.time_factors import calculate_time_risk_factor
-from functions.core_calculations import pressure_alt, density_alt, wind_components, gust_components, calculate_rri, calculate_advanced_rri, get_rri_category, get_status_from_rri
-from functions.probabilistic_rri import calculate_probabilistic_rri_monte_carlo
-from functions.weather_fetcher import fetch_metar, fetch_taf, fetch_notams, fetch_stationinfo, fetch_gairmet, fetch_sigmet, fetch_isigmet, fetch_pirep, fetch_cwa, fetch_windtemp, fetch_areafcst, fetch_fcstdisc, fetch_mis
-from functions.getairportinfo import fetch_airport_info
-from functions.route_analysis import analyze_route
+from functions.core.time_factors import calculate_time_risk_factor
+from functions.core.core_calculations import pressure_alt, density_alt, wind_components, gust_components, calculate_rri, calculate_advanced_rri, get_rri_category, get_status_from_rri
+from functions.core.probabilistic_rri import calculate_probabilistic_rri_monte_carlo
+from functions.data_sources.weather_fetcher import fetch_metar, fetch_taf, fetch_notams, fetch_stationinfo, fetch_gairmet, fetch_sigmet, fetch_isigmet, fetch_pirep, fetch_cwa, fetch_windtemp, fetch_areafcst, fetch_fcstdisc, fetch_mis
+from functions.data_sources.getairportinfo import fetch_airport_info
+from functions.core.route_analysis import analyze_route
 from dotenv import load_dotenv
-from functions.advanced_config import ConfigurationManager
-from functions.database import get_database
+from functions.config.advanced_config import ConfigurationManager
+from functions.infrastructure.database import get_database
 
 load_dotenv()
 
