@@ -31,7 +31,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from functions.core.time_factors import calculate_time_risk_factor
 from functions.core.core_calculations import pressure_alt, density_alt, wind_components, gust_components, calculate_rri, calculate_advanced_rri, get_rri_category, get_status_from_rri
-from functions.core.probabilistic_rri import calculate_probabilistic_rri_monte_carlo
+from functions.core.probabilistic_rri import calculate_probabilistic_rri_monte_carlo, calculate_advanced_probabilistic_rri
 from functions.data_sources.weather_fetcher import fetch_metar, fetch_taf, fetch_notams, fetch_stationinfo, fetch_gairmet, fetch_sigmet, fetch_isigmet, fetch_pirep, fetch_cwa, fetch_windtemp, fetch_areafcst, fetch_fcstdisc, fetch_mis
 from functions.data_sources.getairportinfo import fetch_airport_info
 from functions.core.route_analysis import analyze_route
@@ -280,18 +280,81 @@ async def brief(request: Request, req: BriefRequest):
                 
                 time_factors = calculate_time_risk_factor(datetime.utcnow(), lat, lon, rwy_heading) if lat and lon else None
                 
-                probabilistic_rri_results = {"rri_p05": None, "rri_p95": None}
+                weather = metar.get("weather", [])
+                ceiling = metar.get("ceiling")
+                visibility = metar.get("visibility")
+                
+                probabilistic_analysis = None
                 if lat is not None and lon is not None:
-                    probabilistic_rri_results = calculate_probabilistic_rri_monte_carlo(
-                        rwy_heading=rwy_heading,
-                        original_wind_dir=wind_dir,
-                        original_wind_speed=wind_speed,
-                        original_wind_gust=wind_gust,
-                        da_diff=da_diff,
-                        metar_data=metar,
-                        lat=lat,
-                        lon=lon
-                    )
+                    base_conditions = {
+                        "wind_dir": wind_dir,
+                        "wind_speed": wind_speed,
+                        "wind_gust": wind_gust if wind_gust > 0 else 0,
+                        "temp_c": temp_c,
+                        "altim_in_hg": altim_in_hg
+                    }
+                    
+                    if visibility is not None:
+                        base_conditions["visibility"] = visibility
+                    if ceiling is not None:
+                        base_conditions["ceiling"] = ceiling
+                    
+                    try:
+                        probabilistic_result = calculate_advanced_probabilistic_rri(
+                            rwy_heading=rwy_heading,
+                            base_conditions=base_conditions,
+                            da_diff=da_diff,
+                            metar_data=metar,
+                            lat=lat,
+                            lon=lon,
+                            num_draws=1000,
+                            include_temporal=True,
+                            include_extremes=True,
+                            runway_length=runway_length,
+                            airport_elevation=field_elev,
+                            aircraft_category=req.aircraft_type
+                        )
+                        
+                        probabilistic_analysis = {
+                            "percentiles": probabilistic_result.percentiles,
+                            "statistics": probabilistic_result.statistics,
+                            "risk_distribution": probabilistic_result.risk_distribution,
+                            "confidence_intervals": probabilistic_result.confidence_intervals,
+                            "sensitivity_analysis": probabilistic_result.sensitivity_analysis,
+                            "extreme_scenarios": probabilistic_result.extreme_scenarios[:5],
+                            "temporal_forecast": probabilistic_result.temporal_evolution,
+                            "scenario_summary": {
+                                "total_scenarios": len(probabilistic_result.scenario_clusters["normal"]) + 
+                                                 len(probabilistic_result.scenario_clusters["deteriorating"]) + 
+                                                 len(probabilistic_result.scenario_clusters["improving"]),
+                                "deteriorating_scenarios": len(probabilistic_result.scenario_clusters["deteriorating"]),
+                                "improving_scenarios": len(probabilistic_result.scenario_clusters["improving"])
+                            }
+                        }
+                        
+                        legacy_format = {
+                            "rri_p05": probabilistic_result.percentiles["p05"],
+                            "rri_p95": probabilistic_result.percentiles["p95"]
+                        }
+                        
+                    except Exception as prob_error:
+                        logger.warning(f"Advanced probabilistic analysis failed for {icao} runway {rwy_id}: {str(prob_error)}")
+                        legacy_format = calculate_probabilistic_rri_monte_carlo(
+                            rwy_heading=rwy_heading,
+                            original_wind_dir=wind_dir,
+                            original_wind_speed=wind_speed,
+                            original_wind_gust=wind_gust,
+                            da_diff=da_diff,
+                            metar_data=metar,
+                            lat=lat,
+                            lon=lon
+                        )
+                        probabilistic_analysis = {
+                            "error": "Advanced analysis unavailable - using legacy calculation",
+                            "legacy_percentiles": legacy_format
+                        }
+                else:
+                    legacy_format = {"rri_p05": None, "rri_p95": None}
             except Exception as e:
                 logger.error(f"Error calculating runway data for {icao} runway {rwy_id}: {str(e)}")
                 continue
@@ -311,10 +374,6 @@ async def brief(request: Request, req: BriefRequest):
                 if contributor in rri_contributors and isinstance(rri_contributors[contributor]["value"], list):
                     warnings.extend(rri_contributors[contributor]["value"])
             
-            weather = metar.get("weather", [])
-            ceiling = metar.get("ceiling")
-            visibility = metar.get("visibility")
-
             if any("TS" in weather_condition for weather_condition in weather):
                 warnings.append("Active thunderstorm in vicinity - NO-GO condition.")
             if any("LTG" in weather_condition for weather_condition in weather):
@@ -402,6 +461,25 @@ async def brief(request: Request, req: BriefRequest):
                     "Steady winds reported - consider actual conditions may vary"
                 )
             
+            if probabilistic_analysis and "risk_distribution" in probabilistic_analysis:
+                risk_dist = probabilistic_analysis["risk_distribution"]
+                if risk_dist.get("no_go_probability", 0) > 0.1:
+                    diagnostic_info["recommendations"]["operational_notes"].append(
+                        f"Uncertainty analysis shows {risk_dist['no_go_probability']:.1%} chance of NO-GO conditions"
+                    )
+                elif risk_dist.get("extreme_risk", 0) > 0.2:
+                    diagnostic_info["recommendations"]["operational_notes"].append(
+                        f"Uncertainty analysis shows {risk_dist['extreme_risk']:.1%} chance of extreme risk conditions"
+                    )
+                
+                if "sensitivity_analysis" in probabilistic_analysis:
+                    most_sensitive = max(probabilistic_analysis["sensitivity_analysis"].items(), 
+                                       key=lambda x: x[1], default=(None, 0))
+                    if most_sensitive[0] and most_sensitive[1] > 2:
+                        diagnostic_info["recommendations"]["operational_notes"].append(
+                            f"Risk most sensitive to {most_sensitive[0].replace('_', ' ')} changes"
+                        )
+            
             summary = None
             if os.getenv("OPENAI_API_KEY"):
                 try:
@@ -418,6 +496,17 @@ async def brief(request: Request, req: BriefRequest):
                     
                     advanced_info = "; ".join(advanced_risks) if advanced_risks else "No advanced risk factors detected"
                     
+                    uncertainty_info = "No uncertainty analysis available"
+                    if probabilistic_analysis and "confidence_intervals" in probabilistic_analysis:
+                        ci_90 = probabilistic_analysis["confidence_intervals"]["90_percent"]
+                        uncertainty_info = f"90% confidence interval: {ci_90[0]:.0f}-{ci_90[1]:.0f} RRI"
+                        
+                        if "risk_distribution" in probabilistic_analysis:
+                            risk_dist = probabilistic_analysis["risk_distribution"]
+                            no_go_prob = risk_dist.get("no_go_probability", 0)
+                            if no_go_prob > 0.05:
+                                uncertainty_info += f"; {no_go_prob:.1%} chance NO-GO conditions"
+                    
                     prompt = textwrap.dedent(
                         f"""
                         Generate a single-sentence advisory for a GA pilot based on these data.
@@ -432,6 +521,7 @@ async def brief(request: Request, req: BriefRequest):
                         Gust crosswind: {gust_cross} kt.
                         Density altitude: {da} ft.
                         Advanced Risk Analysis: {advanced_info}
+                        Uncertainty Analysis: {uncertainty_info}
                         Runway Risk Index: {rri}/100 ({get_rri_category(rri)} RISK)
                         Status: {get_status_from_rri(rri)}.
                         """
@@ -464,8 +554,9 @@ async def brief(request: Request, req: BriefRequest):
                 "runway_risk_index": rri,
                 "risk_category": get_rri_category(rri),
                 "status": get_status_from_rri(rri),
-                "rri_p05": probabilistic_rri_results.get("rri_p05"),
-                "rri_p95": probabilistic_rri_results.get("rri_p95"),
+                "rri_p05": legacy_format.get("rri_p05"),
+                "rri_p95": legacy_format.get("rri_p95"),
+                "probabilistic_analysis": probabilistic_analysis,
                 "weather": weather,
                 "ceiling": ceiling,
                 "visibility": visibility,
