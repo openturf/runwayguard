@@ -11,3 +11,6 @@ asyncpg
 sqlalchemy
 sqlalchemy[asyncio]
 vonage
+reportlab
+weasyprint
+jinja2
