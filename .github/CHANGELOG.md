@@ -4,6 +4,83 @@ All notable changes to **RunwayGuard** will be documented in this file.
 
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [2.1.1] – 2025-01-28
+
+### 🔧 Critical Fix: Configuration System Implementation
+
+**Issue Resolved**: The pilot experience level and aircraft type configuration system was completely non-functional - while the configuration framework existed, it was never actually used in risk calculations, making all experience levels produce identical results.
+
+### ✨ Fixed
+- **🎯 Configuration System Integration** (`functions/core/core_calculations.py`)
+  * Added missing `config` parameter to `calculate_advanced_rri()` function
+  * Integrated configuration object with all risk calculation components
+  * Fixed threshold multiplier application logic throughout the system
+  * Updated atmospheric model, performance analyzer, and weather analyzer to use configurable thresholds
+
+- **⚖️ Threshold Multiplier Logic Correction**
+  * Fixed backwards threshold application for ceiling and visibility assessments
+  * Conservative pilots now properly get **lower** thresholds (easier to trigger penalties = higher risk scores)
+  * Aggressive pilots now properly get **higher** thresholds (harder to trigger penalties = lower risk scores)
+  * Corrected wind component threshold calculations to use proper multiplier logic
+
+- **📊 Enhanced Threshold Sensitivity** (`functions/config/advanced_config.py`)
+  * Increased threshold multiplier differences for more pronounced experience level effects:
+    - **Student/Private**: 0.7x thresholds (more conservative, higher sensitivity)
+    - **Commercial/Instrument**: 1.0x thresholds (standard baseline)
+    - **ATP**: 1.4x thresholds (less conservative, lower sensitivity)
+  * Added "standard" experience level mapping for backward compatibility
+
+- **🔗 API Integration** (`routes/v1/brief.py`)
+  * Added missing `config=config` parameter to `calculate_advanced_rri()` function call
+  * Configuration object now properly passed from API request to risk calculations
+  * Pilot experience and aircraft type selections now actually affect results
+
+### 🛠️ Technical Architecture Improvements
+- **Modular Configuration Integration**
+  * All risk analysis components now accept and use configuration objects
+  * Backward compatibility maintained with default configuration fallbacks
+  * Consistent threshold application across wind, weather, and performance factors
+
+- **Proper Threshold Mathematics**
+  * **Wind/Performance Factors**: Threshold values multiplied by config (higher multiplier = harder to trigger)
+  * **Ceiling/Visibility Factors**: Threshold values divided by config (lower multiplier = easier to trigger)
+  * **Score Calculations**: Penalty amounts remain constant, only trigger points change
+
+### 🎯 Real-World Validation Results
+**Test Scenario**: 10kt crosswind, 15kt gusts, 500ft density altitude, 2500ft ceiling, 6SM visibility
+
+- **Student Pilot**: RRI 93 (HIGH risk - appropriately conservative)
+- **Commercial Pilot**: RRI 58 (MODERATE risk - balanced assessment)  
+- **ATP Pilot**: RRI 54 (MODERATE risk - less conservative)
+
+**Component Breakdown**:
+- **Crosswind**: Student 28pts → Commercial 20pts → ATP 14pts
+- **Gust Differential**: Student 17pts → Commercial 12pts → ATP 8pts
+- **Density Altitude**: Student 21pts → Commercial 15pts → ATP 10pts
+- **Low Ceiling**: Student 20pts → Commercial 20pts → ATP 10pts
+
+### 📋 Test Infrastructure
+- **Comprehensive Test Script** (`test_config_differences.py`)
+  * Demonstrates clear differences between experience levels
+  * Validates proper threshold multiplier application
+  * Provides detailed component-by-component scoring breakdown
+  * Confirms conservative vs aggressive risk assessment behavior
+
+### Impact Assessment
+This critical fix transforms the configuration system from **completely non-functional** to **fully operational**, ensuring that:
+
+- **Student pilots** receive appropriately **higher** risk scores for the same conditions
+- **Experienced ATP pilots** receive appropriately **lower** risk scores reflecting their skill level
+- **Aircraft-specific configurations** properly influence runway length requirements and risk thresholds
+- **API users** now get meaningful differences when specifying pilot experience levels
+
+**Before**: All experience levels produced identical risk scores regardless of configuration
+**After**: Clear, logical differences in risk assessment based on pilot experience and aircraft type
+
+This fix ensures RunwayGuard properly adapts its risk assessment to match pilot capabilities and aircraft performance characteristics, providing appropriate guidance for different skill levels and operational contexts.
+
+---
+
 ## [2.1.0] – 2025-01-28
 
 ### 📄 Major Feature: Professional PDF Report Generation System

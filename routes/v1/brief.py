@@ -275,7 +275,8 @@ async def brief(request: Request, req: BriefRequest):
                     airport_elevation=field_elev,
                     terrain_factor=terrain_factor,
                     historical_trend=None,
-                    aircraft_category=req.aircraft_type
+                    aircraft_category=req.aircraft_type,
+                    config=config
                 )
                 
                 time_factors = calculate_time_risk_factor(datetime.utcnow(), lat, lon, rwy_heading) if lat and lon else None

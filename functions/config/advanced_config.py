@@ -50,9 +50,9 @@ class AdvancedRiskConfig:
     def threshold_multiplier(self) -> float:
         """Get threshold multiplier based on risk profile"""
         multipliers = {
-            RiskProfile.CONSERVATIVE: 0.8,  # Lower thresholds = higher sensitivity
+            RiskProfile.CONSERVATIVE: 0.7,  # Lower thresholds = higher sensitivity (more conservative)
             RiskProfile.STANDARD: 1.0,      # Standard thresholds
-            RiskProfile.AGGRESSIVE: 1.2     # Higher thresholds = lower sensitivity
+            RiskProfile.AGGRESSIVE: 1.4     # Higher thresholds = lower sensitivity (less conservative)
         }
         return multipliers[self.risk_profile]
     
@@ -127,7 +127,8 @@ class ConfigurationManager:
             "instrument": RiskProfile.STANDARD,
             "commercial": RiskProfile.STANDARD,
             "atp": RiskProfile.AGGRESSIVE,
-            "cfi": RiskProfile.STANDARD
+            "cfi": RiskProfile.STANDARD,
+            "standard": RiskProfile.STANDARD
         }
         
         aircraft_category = aircraft_mapping.get(aircraft_type.lower(), AircraftCategory.LIGHT)

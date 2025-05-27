@@ -26,66 +26,84 @@ import numpy as np
 from datetime import datetime, timedelta
 from typing import Dict, List, Tuple, Optional, Any
 from .time_factors import calculate_time_risk_factor
+from ..config.advanced_config import AdvancedRiskConfig
 
 class AdvancedAtmosphericModel:
     """Atmospheric condition modeling for better risk assessment"""
     
     @staticmethod
-    def calculate_thermal_gradient_risk(temp_c: float, dewpoint_c: Optional[float], time_of_day: str) -> Tuple[int, List[str]]:
+    def calculate_thermal_gradient_risk(temp_c: float, dewpoint_c: Optional[float], time_of_day: str, config) -> Tuple[int, List[str]]:
         score = 0
         reasons = []
         
         if dewpoint_c is not None:
             dewpoint_spread = temp_c - dewpoint_c
             
-            if temp_c > 25 and dewpoint_spread > 10 and time_of_day in ["afternoon", "midday"]:
-                score += 15
+            high_thermal_temp = config.thermal_gradient_thresholds["high_thermal_temp"]
+            high_thermal_spread = config.thermal_gradient_thresholds["high_thermal_spread"]
+            inversion_temp = config.thermal_gradient_thresholds["inversion_temp"]
+            inversion_spread = config.thermal_gradient_thresholds["inversion_spread"]
+            
+            if temp_c > high_thermal_temp and dewpoint_spread > high_thermal_spread and time_of_day in ["afternoon", "midday"]:
+                score += int(15 * config.threshold_multiplier)
                 reasons.append(f"Strong thermal activity expected (temp {temp_c}°C, spread {dewpoint_spread}°C)")
             
-            if temp_c < 5 and dewpoint_spread < 3 and time_of_day in ["early_morning", "late_evening"]:
-                score += 10
+            if temp_c < inversion_temp and dewpoint_spread < inversion_spread and time_of_day in ["early_morning", "late_evening"]:
+                score += int(10 * config.threshold_multiplier)
                 reasons.append("Temperature inversion conditions may cause low-level turbulence")
         
-        return min(score, 20), reasons
+        return min(int(20 * config.threshold_multiplier), score), reasons
     
     @staticmethod
-    def calculate_stability_index(temp_c: float, dewpoint_c: Optional[float], wind_speed: int) -> Tuple[int, List[str]]:
+    def calculate_stability_index(temp_c: float, dewpoint_c: Optional[float], wind_speed: int, config) -> Tuple[int, List[str]]:
         score = 0
         reasons = []
         
         if dewpoint_c is not None:
             dewpoint_spread = temp_c - dewpoint_c
             
-            if temp_c > 20 and dewpoint_spread < 5:
-                convective_risk = min(25, (30 - temp_c + (5 - dewpoint_spread)) * 2)
+            convective_temp = config.stability_index_thresholds["convective_temp"]
+            convective_spread = config.stability_index_thresholds["convective_spread"]
+            mechanical_wind = config.stability_index_thresholds["mechanical_wind"]
+            mechanical_spread = config.stability_index_thresholds["mechanical_spread"]
+            
+            if temp_c > convective_temp and dewpoint_spread < convective_spread:
+                convective_risk = min(int(25 * config.threshold_multiplier), int((30 - temp_c + (5 - dewpoint_spread)) * 2 * config.threshold_multiplier))
                 if convective_risk > 0:
                     score += convective_risk
                     reasons.append("High convective potential - thunderstorm development possible")
             
-            if wind_speed > 20 and dewpoint_spread > 15:
-                score += 10
+            if wind_speed > mechanical_wind and dewpoint_spread > mechanical_spread:
+                score += int(10 * config.threshold_multiplier)
                 reasons.append("Mechanical turbulence likely due to strong winds and dry conditions")
         
-        return min(score, 30), reasons
+        return min(int(30 * config.threshold_multiplier), score), reasons
 
 class PerformanceRiskAnalyzer:
     """Aircraft performance risk analysis"""
     
     @staticmethod
     def calculate_runway_performance_risk(runway_length: Optional[int], da_diff: int, 
-                                        contamination: str = "dry") -> Tuple[int, List[str]]:
+                                        contamination: str = "dry", config=None) -> Tuple[int, List[str]]:
+        from ..config.advanced_config import AdvancedRiskConfig
+        if config is None:
+            config = AdvancedRiskConfig()
+            
         score = 0
         reasons = []
         
+        high_da_threshold = config.performance_risk_thresholds["high_da_threshold"]
+        moderate_da_threshold = config.performance_risk_thresholds["moderate_da_threshold"]
+        
         if runway_length is None:
-            if da_diff > 2000:
-                score = 15
+            if da_diff > high_da_threshold:
+                score = int(15 * config.threshold_multiplier)
                 reasons.append("Runway length unknown - significant performance degradation likely at high density altitude")
-            elif da_diff > 1000:
-                score = 10
+            elif da_diff > moderate_da_threshold:
+                score = int(10 * config.threshold_multiplier)
                 reasons.append("Runway length unknown - monitor performance degradation at elevated density altitude")
             elif da_diff > 500:
-                score = 5
+                score = int(5 * config.threshold_multiplier)
                 reasons.append("Runway length unknown - verify runway adequacy for current density altitude")
             return score, reasons
         
@@ -104,24 +122,28 @@ class PerformanceRiskAnalyzer:
             performance_degradation = 1 + (da_diff / 10000)
             effective_runway /= performance_degradation
             
-            if da_diff > 3000:
-                score += 20
+            if da_diff > high_da_threshold:
+                score += int(20 * config.threshold_multiplier)
                 reasons.append(f"Significant performance degradation at {da_diff}ft density altitude")
-            elif da_diff > 2000:
-                score += 15
+            elif da_diff > moderate_da_threshold:
+                score += int(15 * config.threshold_multiplier)
                 reasons.append(f"Notable performance degradation at {da_diff}ft density altitude")
         
-        if effective_runway < 2000:
-            score += 30
+        marginal_runway = config.performance_risk_thresholds["marginal_runway"]
+        concerning_runway = config.performance_risk_thresholds["concerning_runway"]
+        adequate_runway = config.performance_risk_thresholds["adequate_runway"]
+        
+        if effective_runway < marginal_runway:
+            score += int(30 * config.threshold_multiplier)
             reasons.append(f"Runway performance marginal: {int(effective_runway)}ft effective length")
-        elif effective_runway < 2500:
-            score += 20
+        elif effective_runway < concerning_runway:
+            score += int(20 * config.threshold_multiplier)
             reasons.append(f"Runway performance concerning: {int(effective_runway)}ft effective length")
-        elif effective_runway < 3000:
-            score += 10
+        elif effective_runway < adequate_runway:
+            score += int(10 * config.threshold_multiplier)
             reasons.append(f"Runway performance adequate but tight: {int(effective_runway)}ft effective length")
         
-        return min(score, 35), reasons
+        return min(int(35 * config.threshold_multiplier), score), reasons
     
     @staticmethod
     def calculate_weight_performance_factor(da_diff: int, temp_c: float) -> float:
@@ -184,35 +206,45 @@ class WeatherRiskAnalyzer:
         return min(score, 50), reasons
     
     @staticmethod
-    def calculate_turbulence_risk(wind_speed: int, wind_gust: int, terrain_factor: float = 1.0) -> Tuple[int, List[str]]:
+    def calculate_turbulence_risk(wind_speed: int, wind_gust: int, terrain_factor: float = 1.0, config=None) -> Tuple[int, List[str]]:
+        from ..config.advanced_config import AdvancedRiskConfig
+        if config is None:
+            config = AdvancedRiskConfig()
+            
         score = 0
         reasons = []
         
+        severe_gust_factor = config.turbulence_risk_thresholds["severe_gust_factor"]
+        significant_gust_factor = config.turbulence_risk_thresholds["significant_gust_factor"]
+        moderate_gust_factor = config.turbulence_risk_thresholds["moderate_gust_factor"]
+        strong_wind_threshold = config.turbulence_risk_thresholds["strong_wind_threshold"]
+        fresh_wind_threshold = config.turbulence_risk_thresholds["fresh_wind_threshold"]
+        
         if wind_gust > 0:
             gust_factor = wind_gust / max(wind_speed, 1)
-            if gust_factor > 2.0:
-                score += 20
+            if gust_factor > severe_gust_factor:
+                score += int(20 * config.threshold_multiplier)
                 reasons.append(f"Severe gustiness: {wind_gust}kt gusts vs {wind_speed}kt steady")
-            elif gust_factor > 1.5:
-                score += 15
+            elif gust_factor > significant_gust_factor:
+                score += int(15 * config.threshold_multiplier)
                 reasons.append(f"Significant gustiness: {wind_gust}kt gusts vs {wind_speed}kt steady")
-            elif gust_factor > 1.3:
-                score += 10
+            elif gust_factor > moderate_gust_factor:
+                score += int(10 * config.threshold_multiplier)
                 reasons.append(f"Moderate gustiness: {wind_gust}kt gusts vs {wind_speed}kt steady")
         
-        if wind_speed > 25:
-            score += 15
+        if wind_speed > strong_wind_threshold:
+            score += int(15 * config.threshold_multiplier)
             reasons.append(f"Strong winds ({wind_speed}kt) likely causing turbulence")
-        elif wind_speed > 20:
-            score += 10
+        elif wind_speed > fresh_wind_threshold:
+            score += int(10 * config.threshold_multiplier)
             reasons.append(f"Fresh winds ({wind_speed}kt) may cause turbulence")
         
         if terrain_factor > 1.0:
-            terrain_score = int((terrain_factor - 1.0) * 20)
+            terrain_score = int((terrain_factor - 1.0) * 20 * config.threshold_multiplier)
             score += terrain_score
             reasons.append("Terrain features may enhance turbulence")
         
-        return min(score, 25), reasons
+        return min(int(25 * config.threshold_multiplier), score), reasons
 
 class RiskCorrelationEngine:
     """Risk correlation and amplification analysis"""
@@ -451,12 +483,15 @@ def parse_notam_risks(notam_data, runway_id):
 def calculate_advanced_rri(head, cross, gust_head, gust_cross, wind_speed, wind_gust, is_head, gust_is_head, 
                           da_diff, metar_data, lat=None, lon=None, rwy_heading=None, notam_data=None,
                           runway_length=None, airport_elevation=None, terrain_factor=1.0, 
-                          historical_trend=None, aircraft_category="light"):
+                          historical_trend=None, aircraft_category="light", config=None):
     """
     Comprehensive Runway Risk Index calculation with improved modeling
     
     This is the full-featured version - the old calculate_rri function is maintained for backward compatibility
     """
+    if config is None:
+        config = AdvancedRiskConfig()
+    
     score = 0
     contributors = {}
     
@@ -490,41 +525,46 @@ def calculate_advanced_rri(head, cross, gust_head, gust_cross, wind_speed, wind_
             contributors["tailwind"] = {"score": tailwind_score, "value": head, "unit": "kt"}
             score += tailwind_score
     if cross > 0:
-        crosswind_score = min(30, (cross / 15) * 30)
+        crosswind_threshold = 15 * config.threshold_multiplier
+        crosswind_score = min(30, int((cross / crosswind_threshold) * 30))
         if crosswind_score > 0:
             contributors["crosswind"] = {"score": crosswind_score, "value": cross, "unit": "kt"}
             score += crosswind_score
         
     if wind_gust > 0:
         gust_diff_val = wind_gust - wind_speed
-        gust_diff_score = min(20, (gust_diff_val / 10) * 20)
+        gust_threshold = 10 * config.threshold_multiplier
+        gust_diff_score = min(20, int((gust_diff_val / gust_threshold) * 20))
         if gust_diff_score > 0:
             contributors["gust_differential"] = {"score": gust_diff_score, "value": gust_diff_val, "unit": "kt"}
             score += gust_diff_score
         
         if not gust_is_head:
-            gust_tailwind_score = min(10, (gust_head / 10) * 10)
+            gust_tailwind_threshold = 10 * config.threshold_multiplier
+            gust_tailwind_score = min(10, int((gust_head / gust_tailwind_threshold) * 10))
             if gust_tailwind_score > 0:
                 contributors["gust_tailwind"] = {"score": gust_tailwind_score, "value": gust_head, "unit": "kt"}
                 score += gust_tailwind_score
         if gust_cross > 0:
-            gust_crosswind_score = min(10, (gust_cross / 20) * 10)
+            gust_crosswind_threshold = 20 * config.threshold_multiplier
+            gust_crosswind_score = min(10, int((gust_cross / gust_crosswind_threshold) * 10))
             if gust_crosswind_score > 0:
                 contributors["gust_crosswind"] = {"score": gust_crosswind_score, "value": gust_cross, "unit": "kt"}
                 score += gust_crosswind_score
             
     if da_diff > 0:
-        da_score = min(30, (da_diff / 2000) * 30)
+        da_threshold = 2000 * config.threshold_multiplier
+        da_score = min(30, int((da_diff / da_threshold) * 30))
         if da_score > 0:
             contributors["density_altitude_diff"] = {"score": da_score, "value": da_diff, "unit": "ft"}
             score += da_score
     
-    thermal_score, thermal_reasons = atm_model.calculate_thermal_gradient_risk(temp_c, dewpoint_c, time_of_day)
+    thermal_score, thermal_reasons = atm_model.calculate_thermal_gradient_risk(temp_c, dewpoint_c, time_of_day, config)
     if thermal_score > 0:
         contributors["thermal_gradient"] = {"score": thermal_score, "value": thermal_reasons, "unit": "conditions"}
         score += thermal_score
     
-    stability_score, stability_reasons = atm_model.calculate_stability_index(temp_c, dewpoint_c, wind_speed)
+    stability_score, stability_reasons = atm_model.calculate_stability_index(temp_c, dewpoint_c, wind_speed, config)
     if stability_score > 0:
         contributors["atmospheric_stability"] = {"score": stability_score, "value": stability_reasons, "unit": "conditions"}
         score += stability_score
@@ -545,7 +585,7 @@ def calculate_advanced_rri(head, cross, gust_head, gust_cross, wind_speed, wind_
         elif any(keyword in notam_text for keyword in ["WET", "STANDING WATER"]):
             contamination = "wet"
     
-    perf_score, perf_reasons = perf_analyzer.calculate_runway_performance_risk(runway_length, da_diff, contamination)
+    perf_score, perf_reasons = perf_analyzer.calculate_runway_performance_risk(runway_length, da_diff, contamination, config)
     if perf_score > 0:
         contributors["runway_performance"] = {"score": perf_score, "value": perf_reasons, "unit": "conditions"}
         score += perf_score
@@ -555,7 +595,7 @@ def calculate_advanced_rri(head, cross, gust_head, gust_cross, wind_speed, wind_
         contributors["precipitation_intensity"] = {"score": precip_score, "value": precip_reasons, "unit": "conditions"}
         score += precip_score
     
-    turb_score, turb_reasons = weather_analyzer.calculate_turbulence_risk(wind_speed, wind_gust, terrain_factor)
+    turb_score, turb_reasons = weather_analyzer.calculate_turbulence_risk(wind_speed, wind_gust, terrain_factor, config)
     if turb_score > 0:
         contributors["turbulence_risk"] = {"score": turb_score, "value": turb_reasons, "unit": "conditions"}
         score += turb_score
@@ -611,13 +651,13 @@ def calculate_advanced_rri(head, cross, gust_head, gust_cross, wind_speed, wind_
         
     if score < 100 and ceiling is not None:
         ceiling_score = 0
-        if ceiling < 500:
+        if ceiling < (500 / config.threshold_multiplier):
             ceiling_score = 40
-        elif ceiling < 1000:
+        elif ceiling < (1000 / config.threshold_multiplier):
             ceiling_score = 30
-        elif ceiling < 2000:
+        elif ceiling < (2000 / config.threshold_multiplier):
             ceiling_score = 20
-        elif ceiling < 3000:
+        elif ceiling < (3000 / config.threshold_multiplier):
             ceiling_score = 10
         if ceiling_score > 0:
             contributors["low_ceiling"] = {"score": ceiling_score, "value": ceiling, "unit": "ft AGL"}
@@ -625,13 +665,13 @@ def calculate_advanced_rri(head, cross, gust_head, gust_cross, wind_speed, wind_
             
     if score < 100 and visibility is not None:
         visibility_score = 0
-        if visibility < 1:
+        if visibility < (1 / config.threshold_multiplier):
             visibility_score = 40
-        elif visibility < 2:
+        elif visibility < (2 / config.threshold_multiplier):
             visibility_score = 30
-        elif visibility < 3:
+        elif visibility < (3 / config.threshold_multiplier):
             visibility_score = 20
-        elif visibility < 5:
+        elif visibility < (5 / config.threshold_multiplier):
             visibility_score = 10
         if visibility_score > 0:
             contributors["low_visibility"] = {"score": visibility_score, "value": visibility, "unit": "SM"}
