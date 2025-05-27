@@ -1,302 +1,169 @@
-# 🛫 RunwayGuard ARRI
-## Advanced Runway Risk Intelligence System
+# RunwayGuard ARRI
+## Advanced Runway Risk Intelligence
 
-> **Next-Generation Aviation Safety Platform** • Real-time risk assessment powered by advanced meteorological analysis, machine learning, and professional-grade algorithms
+**Professional runway safety assessment for pilots and flight operations**
+
+*A product of [OpenTurf.org](https://openturf.org) - Copyright © awade12*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.68+-00a393.svg)](https://fastapi.tiangolo.com)
-[![Version](https://img.shields.io/badge/version-2.0.0-brightgreen.svg)](https://github.com/andrewwade/runwayguard)
-[![API Status](https://img.shields.io/badge/API-Live-success.svg)](https://runwayguard.com/v1/brief/help)
 
 ---
 
-## 🎯 **What Makes RunwayGuard Special?**
+## What is RunwayGuard?
 
-RunwayGuard isn't just another weather app—it's a **professional-grade aviation risk assessment platform** that transforms complex meteorological data into actionable runway safety intelligence. Used by flight schools, professional pilots, and aviation safety professionals worldwide.
+RunwayGuard transforms complex weather data into clear runway risk assessments. Used by flight schools, charter operators, and professional pilots for enhanced safety decision-making.
 
-### 🧠 **Advanced Risk Intelligence Engine**
-- **5 Sophisticated Analysis Modules** working in parallel
-- **15+ Risk Factors** analyzed simultaneously  
-- **Monte Carlo Simulation** for confidence intervals
-- **Multi-Domain Risk Amplification** detection
-- **Aircraft-Specific Performance** modeling
+**Key Features:**
+- Real-time weather analysis from multiple sources (METAR, TAF, NOTAMs, PIREPs)
+- Aircraft-specific performance calculations (C172 to Citation jets)
+- Experience-based risk thresholds (student to ATP)
+- Monte Carlo simulation for confidence intervals
+- Plain English summaries with actionable recommendations
 
-### 🎛️ **Professional Configuration System**
-- **6 Aircraft Categories** (C172 → Citation Jets)
-- **5 Pilot Experience Levels** with adaptive thresholds
-- **3 Risk Profiles** (Conservative → Aggressive)
-- **Custom Runway Requirements** per aircraft type
-
-## 🖥️ **Web Interface Preview**
-
-<div align="center">
-
-![RunwayGuard Analysis Interface](docs/previews/rwyguard-analysis.png)
-
-*Professional runway risk assessment interface showing real-time weather data, risk analysis, and comprehensive safety recommendations*
-
-</div>
-
----
-
-## 🚀 **Quick Start - Get Risk Analysis in 30 Seconds**
+## Quick Start
 
 ```bash
-# 1. Clone and setup
+# Setup
 git clone https://github.com/andrewwade/runwayguard.git
-cd runwayguard && pip install -r requirements.txt
+cd runwayguard
+pip install -r requirements.txt
+cp .env.example .env  # Add your API keys
 
-# 2. Configure (copy .env.example to .env and add your API keys)
-cp .env.example .env
-
-# 3. Launch
+# Run
 uvicorn main:app --reload
 
-# 4. Test with any airport
+# Test
 curl -X POST "http://localhost:8000/v1/brief" \
      -H "Content-Type: application/json" \
      -d '{"icao": "KDFW", "aircraft_type": "c172", "pilot_experience": "commercial"}'
 ```
 
-**🎉 Boom!** You now have professional runway risk assessment running locally.
+## Risk Assessment Engine
 
----
+### Weather Analysis
+- **Atmospheric modeling** - thermal gradients, stability indices, temperature inversions
+- **Precipitation analysis** - 12 types with intensity and contamination effects
+- **Wind analysis** - crosswind, gusts, shear detection
+- **Visibility assessment** - fog, haze, precipitation impacts
 
-## 🔬 **Advanced Risk Analysis Engine (ARRI)**
+### Performance Calculations
+- **Runway adequacy** - length vs aircraft requirements with contamination factors
+- **Density altitude effects** - temperature and pressure altitude corrections
+- **Weight considerations** - performance degradation modeling
+- **Seasonal adjustments** - time-based atmospheric effects
 
-### **🌡️ Advanced Atmospheric Modeling**
-- **Thermal Gradient Analysis** - Convective activity prediction
-- **Atmospheric Stability Index** - Turbulence forecasting  
-- **Temperature Inversion Detection** - Low-level turbulence
-- **Seasonal & Diurnal Modeling** - Time-based atmospheric effects
+### Risk Scoring
 
-### **✈️ Performance Risk Analysis** 
-- **Runway Length vs. Aircraft** - Performance adequacy assessment
-- **Contamination Effects** - Wet/Snow/Ice performance impact
-- **Weight & Balance Factors** - Density altitude corrections
-- **Multi-Aircraft Support** - C172 to Citation Jets
+| Level | Score | Status | Description |
+|-------|-------|--------|-------------|
+| 🟢 LOW | 0-25 | GO | Excellent conditions |
+| 🟡 MODERATE | 26-50 | CAUTION | Manageable challenges |
+| 🟠 HIGH | 51-75 | CAUTION | Significant challenges |
+| 🔴 EXTREME | 76-100 | NO-GO | Dangerous conditions |
 
-### **🌦️ Enhanced Weather Intelligence**
-- **Precipitation Intensity Analysis** - 12 precipitation types
-- **Turbulence Prediction** - Mechanical & convective
-- **Icing Condition Assessment** - Temperature range analysis
-- **Wind Shear Detection** - Thunderstorm & terrain effects
+## Aircraft & Pilot Profiles
 
-### **⚡ Risk Correlation Engine**
-- **Multi-Domain Amplification** - Dangerous combination detection
-- **Cross-Factor Enhancement** - Risk multiplication analysis
-- **Predictive Modeling** - Evolving condition assessment
-- **Historical Trend Integration** - Pattern recognition
+**Aircraft Types:**
+- `c172` - Cessna 172 (2000ft runway requirement)
+- `pa34` - Piper Seneca (2500ft runway requirement)
+- `tbm` - TBM Series (3000ft runway requirement)
+- `citation` - Citation Jets (3500ft runway requirement)
 
----
+**Experience Levels:**
+- `student` - Conservative thresholds (0.8x)
+- `private` - Standard thresholds (1.0x)
+- `commercial` - Standard thresholds (1.0x)
+- `atp` - Aggressive thresholds (1.2x)
 
-## 📊 **Risk Scoring System**
+## Example Output
 
-| **Risk Level** | **Score** | **Status** | **Meaning** | **Action** |
-|----------------|-----------|------------|-------------|------------|
-| 🟢 **LOW** | 0-25 | ✅ **GO** | Excellent conditions | Ideal for training |
-| 🟡 **MODERATE** | 26-50 | ⚠️ **CAUTION** | Manageable challenges | Standard operations |
-| 🟠 **HIGH** | 51-75 | ⚠️ **CAUTION** | Significant challenges | Enhanced vigilance |
-| 🔴 **EXTREME** | 76-100 | ❌ **NO-GO** | Dangerous conditions | Seek alternatives |
-
----
-
-## 🛠️ **Aircraft & Pilot Configurations**
-
-### **Aircraft Categories**
 ```json
 {
-  "c172": "Cessna 172 (2000ft runway, conservative profile)",
-  "pa34": "Piper Seneca (2500ft runway, standard profile)", 
-  "tbm": "TBM Series (3000ft runway, performance profile)",
-  "citation": "Citation Jets (3500ft runway, aggressive profile)"
+  "runway_risk_index": 32,
+  "risk_category": "MODERATE",
+  "status": "CAUTION",
+  "plain_summary": "Moderate crosswind conditions with good visibility. Runway performance adequate with 500ft margin.",
+  "weather_summary": {
+    "wind": "240° at 12kt, gusting 18kt",
+    "visibility": "10+ miles",
+    "ceiling": "Few clouds at 3000ft"
+  },
+  "risk_factors": {
+    "crosswind_component": 8,
+    "runway_performance": 15,
+    "atmospheric_conditions": 9
+  },
+  "recommendations": [
+    "Monitor wind conditions - gusts approaching limits",
+    "Consider runway 24L for better wind alignment"
+  ]
 }
 ```
 
-### **Experience Levels**
-- **🎓 Student/Private**: Conservative 0.8x thresholds
-- **📊 Instrument/Commercial**: Standard 1.0x thresholds  
-- **👨‍✈️ ATP/Professional**: Aggressive 1.2x thresholds
+## SMS Integration
 
----
-
-## 🎯 **Real-World Examples**
-
-### **Example 1: Perfect Training Conditions**
-```bash
-curl -X POST "/v1/brief" -d '{"icao": "KGGG", "aircraft_type": "c172", "pilot_experience": "student"}'
-```
-```json
-{
-  "runway_risk_index": 15,
-  "risk_category": "LOW", 
-  "status": "GO",
-  "plain_summary": "Excellent conditions for training - light winds, good visibility, minimal challenges."
-}
-```
-
-### **Example 2: Challenging Professional Conditions**
-```bash
-curl -X POST "/v1/brief" -d '{"icao": "KCNW", "aircraft_type": "tbm", "pilot_experience": "atp"}'
-```
-```json
-{
-  "runway_risk_index": 58,
-  "risk_category": "HIGH",
-  "status": "CAUTION", 
-  "advanced_analysis": {
-    "thermal_conditions": ["Strong thermal activity expected"],
-    "runway_performance": ["Performance adequate but tight: 2859ft effective"],
-    "risk_amplification": ["High density altitude with challenging winds"]
-  }
-}
-```
-
----
-
-## 🌐 **Comprehensive Data Integration**
-
-### **Real-Time Weather Sources**
-| **Source** | **Purpose** | **Update Frequency** |
-|------------|-------------|---------------------|
-| 🌤️ **METAR** | Current observations | Every hour |
-| 📈 **TAF** | Terminal forecasts | 4x daily |
-| 📋 **NOTAMs** | Airport notices | Real-time |
-| ✈️ **PIREPs** | Pilot reports | Real-time |
-| ⛈️ **SIGMETs** | Significant weather | As needed |
-| 🌪️ **AIRMETs** | Airmen advisories | 6-hourly |
-
-### **Advanced Analytics**
-- **☀️ Solar Position Calculations** - Glare risk assessment
-- **🎲 Monte Carlo Simulation** - Confidence intervals
-- **📊 Probabilistic Analysis** - Risk uncertainty quantification
-- **🤖 AI-Powered Summaries** - Plain English advisories
-
----
-
-## 🏫 **Perfect for Flight Training**
-
-### **Flight Schools Love RunwayGuard Because:**
-- **📚 Educational Value** - Students learn real risk assessment
-- **🎯 Scenario-Based Training** - Various challenge levels  
-- **👨‍🏫 Instructor Tools** - Comprehensive risk breakdowns
-- **📊 Progress Tracking** - Risk tolerance development
-
-### **Professional Operations Use Cases:**
-- **🚁 Charter Operations** - Client safety demonstrations
-- **✈️ Corporate Flight Departments** - Risk management protocols
-- **🏢 Part 135 Operators** - Enhanced safety margins
-- **📚 Aviation Universities** - Research and education
-
----
-
-## 📱 **SMS Integration - Get Briefings via Text**
-
-### **🚀 Quick SMS Briefings**
-Send a text message to get instant runway risk assessments on your phone!
+Get briefings via text message:
 
 ```
 Text: KDFW C172 PRIVATE
 Reply: KDFW RWY18R: GO
        RRI: 25/100 (LOW)
-       Wind: 180°@8kt
-       H/X: +8/+0kt
+       Wind: 180°@8kt, X: +8kt
        RunwayGuard.com
 ```
 
-### **📲 Supported SMS Formats**
-- **Single Line**: `KDFW C172 PRIVATE`
-- **Multi-Line**: 
-  ```
-  KDFW
-  C172
-  PRIVATE
-  ```
+**Supported formats:**
+- Aircraft: `C172`, `TWIN`, `TURBO`, `JET`
+- Experience: `STUDENT`, `PRIVATE`, `COMMERCIAL`, `ATP`
 
-### **✈️ Aircraft Types via SMS**
-- `C172`, `CESSNA`, `PIPER` → Light aircraft
-- `TWIN`, `MULTI`, `BE58` → Twin engine
-- `KING`, `BEECH`, `TURBO` → Turboprop
-- `JET`, `CITATION`, `LEAR` → Jet aircraft
+## API Reference
 
-### **👨‍✈️ Experience Levels via SMS**
-- `STUDENT` → Student pilot settings
-- `PRIVATE`, `PPL` → Private pilot
-- `INSTRUMENT`, `IFR` → Instrument rated
-- `COMMERCIAL`, `CPL` → Commercial pilot
-- `ATP`, `AIRLINE` → Airline transport pilot
-
-### **🔧 SMS Setup**
-See [SMS Setup Guide](docs/sms-setup.md) for complete configuration instructions.
-
----
-
-## 🔧 **API Features**
-
-### **Smart Error Handling**
+### POST /v1/brief
 ```json
 {
-  "message": "Airport not found",
-  "details": {
-    "suggestions": [
-      "Verify ICAO code is correct (e.g., KDFW, KGGG, KCNW)",
-      "Use 4-letter ICAO codes, not 3-letter IATA codes"
-    ],
-    "help": "For API usage guidance, visit /v1/brief/help"
-  }
+  "icao": "KDFW",
+  "aircraft_type": "c172",
+  "pilot_experience": "commercial"
 }
 ```
 
-### **Comprehensive Help System**
-```bash
-curl -X GET "/v1/brief/help"
-```
-Get complete API documentation, parameter guides, and example requests.
+### GET /v1/brief/help
+Complete API documentation and examples.
 
-### **Rate Limiting & Security**
-- **Brief Endpoint**: 20 requests/minute
-- **Help Endpoint**: 60 requests/minute  
-- **Input Validation**: Comprehensive ICAO code checking
-- **Error Recovery**: Graceful degradation with partial data
+**Rate limits:**
+- Brief endpoint: 20 requests/minute
+- Help endpoint: 60 requests/minute
 
----
+## Technical Details
 
-## 📈 **Technical Specifications**
+**Architecture:**
+- Python 3.8+ with FastAPI
+- Async processing for concurrent weather data retrieval
+- Redis caching for performance
+- Comprehensive input validation
 
-### **Performance Metrics**
-- **⚡ Response Time**: < 500ms average
-- **🎯 Accuracy**: 15+ validated risk factors
-- **🔄 Uptime**: 99.9% availability target
-- **📊 Coverage**: 5,000+ airports worldwide
+**Data Sources:**
+- METAR (hourly observations)
+- TAF (terminal forecasts)
+- NOTAMs (real-time notices)
+- PIREPs (pilot reports)
+- SIGMETs/AIRMETs (significant weather)
 
-### **Architecture**
-- **🐍 Python 3.8+** with FastAPI framework
-- **⚡ Async/Await** for concurrent processing
-- **🔄 Redis Caching** for optimal performance
-- **📈 Horizontal Scaling** ready
+**Performance:**
+- Response time: <500ms average
+- Coverage: 5,000+ airports worldwide
+- Uptime target: 99.9%
 
----
+## Documentation
 
-## 🎓 **Educational Resources**
+- [Algorithm Details](docs/algorithm.md)
+- [Advanced Risk Analysis](docs/advanced_risk_analysis.md)
+- [API Enhancement Guide](docs/api_enhancement_summary.md)
+- [Usage Examples](docs/example/)
 
-### **Documentation**
-- 📖 [**Algorithm Deep Dive**](docs/algorithm.md) - Mathematical foundations
-- 🔬 [**Advanced Risk Analysis**](docs/advanced_risk_analysis.md) - ARRI system details  
-- 📊 [**API Enhancement Guide**](docs/api_enhancement_summary.md) - Integration examples
-- ✈️ [**Real-World Case Studies**](docs/kcnw_analysis_comparison.md) - Analysis comparisons
-
-### **Examples & Demos**
-- 🚀 [**Advanced Usage Examples**](docs/example/advanced_usage_example.py) - Python integration
-- 🎯 [**KDFW Demo Output**](docs/example/kdfw.json) - Complete analysis example
-- 📚 [**Configuration Examples**](functions/advanced_config.py) - Custom setups
-
----
-
-## 🤝 **Contributing & Community**
-
-### **Join the RunwayGuard Community**
-We welcome contributions from pilots, developers, and aviation safety enthusiasts!
+## Development
 
 ```bash
 # Development setup
@@ -308,69 +175,36 @@ pip install -r requirements-dev.txt
 # Run tests
 pytest tests/
 
-# Submit your improvements
-git checkout -b feature/your-improvement
+# Submit improvements
+git checkout -b feature/improvement
 # Make changes...
-git commit -m "Add awesome feature"
-git push origin feature/your-improvement
-# Open Pull Request
+git commit -m "Description of changes"
+git push origin feature/improvement
 ```
 
-### **Areas We Need Help With:**
-- 🌍 **International Airport Data** - Expanding global coverage
-- 🧪 **Testing Scenarios** - More edge case validation
-- 📱 **Mobile Integration** - iOS/Android SDKs
-- 🎨 **UI/UX** - Web interface development
-- 📊 **Analytics** - Enhanced risk modeling
+## Safety Notice
+
+⚠️ **RunwayGuard is an advisory tool only**
+
+- Always consult official weather briefings and NOTAMs
+- Follow your aircraft's operating limitations
+- Use proper flight planning procedures
+- Not a replacement for pilot judgment
+- Not certified for operational decision-making
+
+## Support
+
+- **Issues:** [GitHub Issues](https://github.com/andrewwade/runwayguard/issues)
+- **Features:** [GitHub Discussions](https://github.com/andrewwade/runwayguard/discussions)
+- **Commercial:** andrew@openturf.org
+- **Documentation:** [docs/](docs/)
+
+## License
+
+MIT License - see [LICENSE.md](LICENSE.md)
 
 ---
 
-## ⚠️ **Important Safety Notice**
+**RunwayGuard ARRI** - Professional runway risk assessment for safer aviation operations.
 
-> **⚠️ RunwayGuard is an advisory tool only**
-> 
-> - Always follow official weather briefings and NOTAMs
-> - Consult your aircraft's operating handbook for limitations  
-> - Use in conjunction with proper flight planning procedures
-> - Not a replacement for pilot judgment and training
-> - Not certified for use in operational decision-making
-
----
-
-## 📄 **Licensing & Support**
-
-### **License**
-Licensed under MIT License with Commercial Use Notification - see [LICENSE.md](LICENSE.md)
-
-### **Support & Contact**
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/andrewwade/runwayguard/issues)
-- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/andrewwade/runwayguard/discussions)
-- 📧 **Commercial Licensing**: andrew@openturf.org
-- 📚 **Documentation**: [Full API Docs](docs/)
-
----
-
-## 🙏 **Acknowledgments**
-
-Special thanks to:
-- **🌦️ Aviation Weather Center** - Comprehensive weather data
-- **🤖 OpenAI** - Natural language processing capabilities  
-- **⚡ FastAPI Team** - Outstanding web framework
-- **👨‍✈️ Aviation Community** - Feedback, testing, and validation
-- **🎓 Flight Training Community** - Real-world use cases and requirements
-
----
-
-<div align="center">
-
-### 🚀 **Ready to Transform Your Aviation Safety?**
-
-**[Get Started Now](https://github.com/andrewwade/runwayguard)** • **[View Documentation](docs/)** • **[API Reference](/v1/brief/help)**
-
-*Built with ❤️ for the aviation community by pilots, for pilots.*
-
-</div>
-
----
-
-*RunwayGuard ARRI - Because every runway operation deserves professional-grade risk assessment.*
+*Built by pilots, for pilots. A product of [OpenTurf.org](https://openturf.org)*

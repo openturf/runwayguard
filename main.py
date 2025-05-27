@@ -1,7 +1,3 @@
-# RunwayGuard – minimal FastAPI micro‑service that calculates real‑time runway wind components
-# and density altitude, optionally generating a plain‑English advisory via OpenAI.
-# Copyright by awade12(openturf.org)
-
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,7 +8,6 @@ import logging
 
 load_dotenv()
 
-# route initializations!
 from routes.v1.brief import router as brief_router, APIError
 from routes.v1.printbrief import router as printbrief_router
 from routes.v1.info import router as info_router
