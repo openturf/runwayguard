@@ -14,3 +14,4 @@ vonage
 reportlab
 weasyprint
 jinja2
+sentry-sdk[fastapi]
